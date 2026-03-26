@@ -23,9 +23,10 @@ import os
 import re
 import json
 import logging
+import time
 from datetime import datetime, timezone
 
-import praw
+import requests
 import tweepy
 
 logger = logging.getLogger(__name__)
@@ -34,22 +35,23 @@ logger = logging.getLogger(__name__)
 SUBREDDITS = [
     "hiphopheads",
     "indieheads",
-    "rnb",
-    "trap",
-    "electronicmusic",
     "listentothis",
+    "rnb",
+    "electronicmusic",
 ]
+
+REDDIT_HEADERS = {"User-Agent": "scoute-bot/1.0 by akash"}
 
 # Most music subreddits use "Artist - Song Title [genre] (year)" in post titles.
 # listentothis uses "Artist -- Song Title [genre]"
 TITLE_PATTERN = re.compile(
     r"^(?P<artist>.+?)\s*[-–—]{1,2}\s*(?P<song>.+?)"  # Artist - Song
     r"(?:\s*\[(?P<genre>[^\]]+)\])?"                    # optional [genre]
-    r"(?:\s*\((?P<year>\d{4})\))?",                     # optional (year)
+    r"(?:\s*\((?P<year>\d{4})\))?$",                    # optional (year)
     re.IGNORECASE,
 )
 
-# Minimum score (upvotes) for a post to be included
+# Minimum upvote score for a post to be included
 MIN_SCORE = 50
 
 # --- Twitter/X config ---
@@ -59,16 +61,8 @@ TWITTER_QUERY = (
     "lang:en -is:retweet"
 )
 
-# Regex to pull Spotify track/album URLs from tweet text
+# Regex to pull Spotify track URLs from tweet text
 SPOTIFY_TRACK_RE = re.compile(r"spotify\.com/track/([A-Za-z0-9]+)")
-
-
-def _reddit_client() -> praw.Reddit:
-    return praw.Reddit(
-        client_id=os.environ["REDDIT_CLIENT_ID"],
-        client_secret=os.environ["REDDIT_CLIENT_SECRET"],
-        user_agent=os.environ.get("REDDIT_USER_AGENT", "scoute-bot/1.0"),
-    )
 
 
 def _twitter_client() -> tweepy.Client:
@@ -93,47 +87,62 @@ def _parse_title(title: str) -> tuple[str, str] | None:
 
 def fetch_reddit_trending(limit: int = 50) -> list[dict]:
     """
-    Pull hot posts from music subreddits via PRAW.
-    Parses "Artist - Song [genre] (year)" titles and scores by upvotes.
-    Returns a list of track dicts.
+    Fetch hot posts from music subreddits using Reddit's public .json feeds.
+    No API key required — uses a browser-like User-Agent header.
+    Scores each track by upvotes + comment count combined.
     """
     logger.info("Fetching Reddit trending tracks...")
-    reddit = _reddit_client()
     tracks: list[dict] = []
 
     for sub_name in SUBREDDITS:
-        subreddit = reddit.subreddit(sub_name)
+        url = f"https://www.reddit.com/r/{sub_name}/hot.json?limit={limit}"
         try:
-            for post in subreddit.hot(limit=limit):
-                if post.score < MIN_SCORE:
-                    continue
-                # Skip self/text posts that aren't music links
-                if post.is_self:
-                    continue
-
-                parsed = _parse_title(post.title)
-                if not parsed:
-                    continue
-                artist, song = parsed
-
-                tracks.append({
-                    "artist": artist,
-                    "song": song,
-                    "source": "reddit",
-                    "subreddit": sub_name,
-                    "mentions": 1,
-                    "score": post.score,
-                    "sentiment": 0.0,  # populated later by NLP pass
-                    "first_seen": datetime.fromtimestamp(
-                        post.created_utc, tz=timezone.utc
-                    ).isoformat(),
-                    "url": post.url,
-                    "reddit_url": f"https://reddit.com{post.permalink}",
-                })
+            resp = requests.get(url, headers=REDDIT_HEADERS, timeout=10)
+            resp.raise_for_status()
+            posts = resp.json()["data"]["children"]
         except Exception as e:
             logger.warning(f"Error fetching r/{sub_name}: {e}")
+            time.sleep(1)
+            continue
 
-    logger.info(f"Reddit: {len(tracks)} tracks found.")
+        for post in posts:
+            data = post["data"]
+
+            # Skip pinned mod posts, self/text posts, and low-score posts
+            if data.get("stickied"):
+                continue
+            if data.get("is_self"):
+                continue
+            if data.get("score", 0) < MIN_SCORE:
+                continue
+
+            parsed = _parse_title(data["title"])
+            if not parsed:
+                continue
+            artist, song = parsed
+
+            score = data.get("score", 0) + data.get("num_comments", 0)
+            tracks.append({
+                "artist": artist,
+                "song": song,
+                "source": "reddit",
+                "subreddit": sub_name,
+                "mentions": 1,
+                "score": score,
+                "upvotes": data.get("score", 0),
+                "comments": data.get("num_comments", 0),
+                "sentiment": 0.0,
+                "first_seen": datetime.fromtimestamp(
+                    data["created_utc"], tz=timezone.utc
+                ).isoformat(),
+                "url": data.get("url", ""),
+                "reddit_url": f"https://reddit.com{data.get('permalink', '')}",
+            })
+
+        # Be polite — Reddit rate-limits aggressive crawlers
+        time.sleep(1)
+
+    logger.info(f"Reddit: {len(tracks)} tracks found across {len(SUBREDDITS)} subreddits.")
     return tracks
 
 

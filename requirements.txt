@@ -1,9 +1,6 @@
 # Core AI
 anthropic>=0.40.0          # Claude API — used by Ghostwriter Agent
 
-# Reddit scraping
-praw>=7.7.0                # Python Reddit API Wrapper
-
 # Twitter/X scraping
 tweepy>=4.14.0             # Twitter API v2 client
 

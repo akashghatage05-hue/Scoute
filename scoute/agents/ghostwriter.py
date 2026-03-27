@@ -160,10 +160,10 @@ def run(opportunities: list[dict]) -> list[str]:
         matched_curators = SAMPLE_CURATORS
 
         for curator in matched_curators:
-            logger.info(f"Generating email: {artist['artist']} → {curator['name']}")
+            logger.info(f"Generating email: {artist['artist']} -> {curator['name']}")
             email_content = generate_email(artist, curator, client)
             filepath = save_email(email_content, artist, curator)
             saved_files.append(filepath)
 
-    logger.info(f"Ghostwriter Agent complete — {len(saved_files)} emails generated.")
+    logger.info(f"Ghostwriter Agent complete - {len(saved_files)} emails generated.")
     return saved_files

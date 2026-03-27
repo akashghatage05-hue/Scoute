@@ -69,19 +69,49 @@ def _twitter_client() -> tweepy.Client:
     return tweepy.Client(bearer_token=os.environ["TWITTER_BEARER_TOKEN"])
 
 
+# Matches any bracketed tag at the start of a title, e.g. [FRESH], [DISCUSSION], [AMA]
+REDDIT_PREFIX_RE = re.compile(r"^(\[[^\]]+\]\s*)+", re.IGNORECASE)
+
+# Words that strongly suggest the left side of a " - " split is the song, not the artist.
+# Used to detect and fix reversed "Song - Artist" titles.
+_SONG_INDICATOR_WORDS = re.compile(
+    r"\b(official|video|audio|lyrics|ft\.?|feat\.?|prod\.?|remix|edit|mix|version|live|acoustic|cover|remaster)\b",
+    re.IGNORECASE,
+)
+
+
 def _parse_title(title: str) -> tuple[str, str] | None:
     """
     Extract (artist, song) from a subreddit post title.
-    Returns None if the title doesn't match the expected pattern.
+
+    Steps:
+      1. Strip all bracketed prefixes: [FRESH], [VIDEO], [DISCUSSION], [AMA], etc.
+      2. Match "Artist - Song [genre] (year)" pattern.
+      3. Detect reversed "Song - Artist" titles and swap them.
+      4. Reject obviously bad parses (single chars, pure numbers, etc.)
     """
-    m = TITLE_PATTERN.match(title.strip())
+    # Step 1 — strip all leading bracketed tags
+    title = REDDIT_PREFIX_RE.sub("", title.strip()).strip()
+
+    # Step 2 — match the standard pattern
+    m = TITLE_PATTERN.match(title)
     if not m:
         return None
+
     artist = m.group("artist").strip()
     song = m.group("song").strip()
-    # Drop obviously bad parses (e.g. artist is a single punctuation char)
+
+    # Step 3 — detect reversed titles: if the "artist" side contains song-indicator
+    # words (Official, Video, feat., etc.) but the "song" side does not, swap them.
+    artist_looks_like_song = bool(_SONG_INDICATOR_WORDS.search(artist))
+    song_looks_like_song = bool(_SONG_INDICATOR_WORDS.search(song))
+    if artist_looks_like_song and not song_looks_like_song:
+        artist, song = song, artist
+
+    # Step 4 — reject bad parses
     if len(artist) < 2 or len(song) < 2:
         return None
+
     return artist, song
 
 

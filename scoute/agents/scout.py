@@ -33,11 +33,33 @@ logger = logging.getLogger(__name__)
 
 # --- Reddit config ---
 SUBREDDITS = [
+    # Mainstream discovery
     "hiphopheads",
     "indieheads",
     "listentothis",
     "rnb",
     "electronicmusic",
+    # Underground / regional hip-hop
+    "undergroundhiphop",
+    "chicagorap",
+    "ukdrill",
+    # Global genres
+    "afrobeats",
+    "latin",
+    "kpop",
+    "jmusic",
+    # Indie subgenres
+    "bedroom_pop",
+    "poppunkers",
+    "emo",
+    "metalcore",
+    # Dance / legacy
+    "DJs",
+    "funk",
+    "soul",
+    "jazz",
+    # Future / experimental
+    "futurebeats",
 ]
 
 REDDIT_HEADERS = {"User-Agent": "scoute-bot/1.0 by akash"}
@@ -115,7 +137,7 @@ def _parse_title(title: str) -> tuple[str, str] | None:
     return artist, song
 
 
-def fetch_reddit_trending(limit: int = 50) -> list[dict]:
+def fetch_reddit_trending(limit: int = 100) -> list[dict]:
     """
     Fetch hot posts from music subreddits using Reddit's public .json feeds.
     No API key required — uses a browser-like User-Agent header.

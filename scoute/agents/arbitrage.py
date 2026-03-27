@@ -36,6 +36,31 @@ OUTPUT_PATH = "scoute/data/arbitrage_results.json"
 DEEZER_SEARCH = "https://api.deezer.com/search/artist"
 DEEZER_HEADERS = {"User-Agent": "scoute-bot/1.0"}
 
+# ── Filters ──────────────────────────────────────────────────────────────────
+# Artists with fewer fans than this are likely Deezer mismatches (wrong artist
+# returned because the name is too generic or the real artist isn't on Deezer).
+MIN_DEEZER_FANS = 100
+
+# Artists above this threshold are already mainstream — not an arbitrage opportunity.
+MAX_DEEZER_FANS = 200_000
+
+# Single-word names under 4 chars, or names made entirely of common generic words,
+# are almost certainly bad title parses ("magic", "move", "body", etc.).
+GENERIC_WORDS = {
+    "magic", "move", "body", "love", "new", "feel", "good", "real",
+    "live", "free", "play", "soul", "fire", "gold", "rise", "wild",
+    "light", "dark", "blue", "red", "gone", "stay", "run", "fly",
+}
+
+def _is_valid_artist_name(name: str) -> bool:
+    """Return False if the name is too short or made up entirely of generic words."""
+    if len(name.strip()) < 4:
+        return False
+    words = set(name.lower().split())
+    if words and words.issubset(GENERIC_WORDS):
+        return False
+    return True
+
 
 # ---------------------------------------------------------------------------
 # Data fetchers
@@ -126,6 +151,12 @@ def find_arbitrage_opportunities(scout_tracks: list[dict]) -> list[dict]:
     for key, track in seen.items():
         artist_name = track["artist"]
         reddit_score = track.get("score", 0)
+
+        # Filter 3 — skip bad parses before hitting any API
+        if not _is_valid_artist_name(artist_name):
+            logger.debug(f"  Skipping '{artist_name}' — generic or too-short name.")
+            continue
+
         logger.info(f"Looking up: {artist_name} (reddit score: {reddit_score})")
 
         deezer = fetch_deezer_artist(artist_name)
@@ -135,6 +166,16 @@ def find_arbitrage_opportunities(scout_tracks: list[dict]) -> list[dict]:
 
         deezer_fans = deezer.get("nb_fan", 0)
         deezer_url = deezer.get("link", "")
+
+        # Filter 1 — too few fans means Deezer returned the wrong artist
+        if deezer_fans < MIN_DEEZER_FANS:
+            logger.debug(f"  Skipping '{artist_name}' — only {deezer_fans} Deezer fans (likely mismatch).")
+            continue
+
+        # Filter 2 — too many fans means already mainstream
+        if deezer_fans > MAX_DEEZER_FANS:
+            logger.debug(f"  Skipping '{artist_name}' — {deezer_fans:,} Deezer fans (already mainstream).")
+            continue
         arb_score = compute_arbitrage_score(reddit_score, deezer_fans)
 
         spotify_url = fetch_spotify_url(sp, artist_name)

@@ -1,144 +1,182 @@
 """
 Arbitrage Agent
 ---------------
-Identifies artists who are blowing up in one region but remain unknown elsewhere —
-the geographic "arbitrage gap" that signals an early signing or sync opportunity.
+For each artist found by the Scout Agent, cross-references two data sources:
 
-Strategy:
-  - Pulls regional streaming charts from Spotify, Apple Music, and Shazam
-  - Compares artist popularity scores across regions
-  - Flags artists with high local traction but low global Spotify follower counts
+  1. Deezer public API (no key needed) — global fan count as a reach proxy
+  2. Scout Agent Reddit score — current social buzz
 
-Output: saves structured JSON to data/arbitrage_results.json
-  {
-    "artist": "...",
-    "hot_regions": ["BR", "NG", "PH"],
-    "cold_regions": ["US", "GB", "DE"],
-    "regional_streams": { "BR": 500000, ... },
-    "global_followers": 1200,
-    "arbitrage_score": 0.92,   # 0–1, higher = bigger gap
-    "spotify_url": "...",
-    "snapshot_date": "ISO timestamp"
-  }
+Arbitrage score = log10(reddit_score + 1) / log10(deezer_fans + 10)
+
+High Reddit buzz + low Deezer fans = undiscovered artist worth watching.
+Spotipy is used only to resolve a Spotify profile URL for each artist.
+
+Output: saves to scoute/data/arbitrage_results.json
 """
 
-import os
 import json
 import logging
-from datetime import datetime
+import math
+import os
+import time
+from datetime import datetime, timezone
+
+import requests
+import spotipy
+from dotenv import load_dotenv
+from spotipy.oauth2 import SpotifyClientCredentials
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# Regions to compare — ISO 3166-1 alpha-2 codes
-HOT_REGIONS = ["BR", "NG", "PH", "MX", "IN"]   # emerging markets to watch
-COLD_REGIONS = ["US", "GB", "DE", "FR", "AU"]   # established markets
+SCOUT_RESULTS_PATH = "scoute/data/scout_results.json"
+OUTPUT_PATH = "scoute/data/arbitrage_results.json"
 
-# Threshold: artist must have fewer than this many global followers to qualify
-MAX_GLOBAL_FOLLOWERS = 50_000
-
-# Minimum regional chart position to be considered "blowing up"
-MIN_CHART_POSITION = 50  # top-50 in a regional chart
+DEEZER_SEARCH = "https://api.deezer.com/search/artist"
+DEEZER_HEADERS = {"User-Agent": "scoute-bot/1.0"}
 
 
-def fetch_spotify_regional_charts(region: str) -> list[dict]:
+# ---------------------------------------------------------------------------
+# Data fetchers
+# ---------------------------------------------------------------------------
+
+def _spotify_client() -> spotipy.Spotify:
+    return spotipy.Spotify(
+        auth_manager=SpotifyClientCredentials(
+            client_id=os.environ["SPOTIFY_CLIENT_ID"],
+            client_secret=os.environ["SPOTIFY_CLIENT_SECRET"],
+        )
+    )
+
+
+def fetch_deezer_artist(name: str) -> dict | None:
     """
-    Pull the current Spotify Top 200 chart for a given region via the Spotify Web API.
-
-    TODO:
-      - Authenticate with Spotify API (client_id, client_secret in .env)
-      - Hit GET /charts/regional/{region}/weekly endpoint (or scrape charts.spotify.com)
-      - Return list of {artist, track, position, streams} dicts
+    Search Deezer for an artist by name (no API key required).
+    Returns the top result dict with nb_fan, or None if not found.
     """
-    logger.info(f"Fetching Spotify chart for region: {region}")
-    # Placeholder
-    return []
+    try:
+        resp = requests.get(
+            DEEZER_SEARCH,
+            params={"q": name, "limit": 1},
+            headers=DEEZER_HEADERS,
+            timeout=8,
+        )
+        resp.raise_for_status()
+        data = resp.json().get("data", [])
+        return data[0] if data else None
+    except Exception as e:
+        logger.warning(f"Deezer lookup failed for '{name}': {e}")
+        return None
 
 
-def fetch_artist_global_followers(artist_id: str) -> int:
+def fetch_spotify_url(sp: spotipy.Spotify, name: str) -> str:
     """
-    Look up an artist's total global Spotify follower count.
-
-    TODO:
-      - Hit GET /artists/{id} endpoint
-      - Return followers.total
+    Search Spotify for an artist and return their profile URL.
+    Used only for the output link — no follower/popularity data needed.
     """
-    return 0  # Placeholder
+    try:
+        results = sp.search(q=f"artist:{name}", type="artist", limit=1)
+        items = results.get("artists", {}).get("items", [])
+        if items:
+            return items[0]["external_urls"].get("spotify", "")
+    except Exception as e:
+        logger.debug(f"Spotify URL lookup failed for '{name}': {e}")
+    return ""
 
 
-def compute_arbitrage_score(regional_streams: dict[str, int], global_followers: int) -> float:
+# ---------------------------------------------------------------------------
+# Scoring
+# ---------------------------------------------------------------------------
+
+def compute_arbitrage_score(reddit_score: int, deezer_fans: int) -> float:
     """
-    Score = (avg regional streams in hot markets) / (global_followers + 1)
-    Normalized to 0–1 range via sigmoid or min-max across the candidate pool.
+    Score = log10(reddit_score + 1) / log10(deezer_fans + 10)
 
-    Higher score = bigger arbitrage gap = higher priority opportunity.
+    - High reddit_score + low deezer_fans → high score (hidden gem)
+    - High reddit_score + high deezer_fans → lower score (already mainstream)
+    - log10 on both sides keeps the scale balanced for very large numbers.
     """
-    if not regional_streams:
-        return 0.0
-    avg_streams = sum(regional_streams.values()) / len(regional_streams)
-    raw_score = avg_streams / (global_followers + 1)
-    # Simple normalization placeholder — replace with dataset-wide min-max
-    return min(raw_score / 10_000, 1.0)
+    return round(math.log10(reddit_score + 1) / math.log10(deezer_fans + 10), 4)
 
+
+# ---------------------------------------------------------------------------
+# Main logic
+# ---------------------------------------------------------------------------
 
 def find_arbitrage_opportunities(scout_tracks: list[dict]) -> list[dict]:
     """
-    Cross-references Scout Agent results with regional chart data.
-    Returns artists sorted by arbitrage_score descending.
-
-    TODO:
-      - For each artist in scout_tracks, check regional chart positions
-      - Fetch global follower count
-      - Compute arbitrage score
-      - Filter to candidates above a minimum score threshold
+    For each unique artist in scout_tracks, fetch Deezer fan count and
+    compute the arbitrage score against their Reddit buzz score.
     """
-    opportunities = []
+    sp = _spotify_client()
 
+    # Deduplicate artists — keep the highest Reddit-scored track per artist
+    seen: dict[str, dict] = {}
     for track in scout_tracks:
-        artist = track.get("artist", "")
+        artist = track.get("artist", "").strip()
         if not artist:
             continue
+        key = artist.lower()
+        if key not in seen or track.get("score", 0) > seen[key].get("score", 0):
+            seen[key] = track
 
-        regional_streams: dict[str, int] = {}
-        for region in HOT_REGIONS:
-            charts = fetch_spotify_regional_charts(region)
-            for entry in charts:
-                if entry.get("artist", "").lower() == artist.lower():
-                    regional_streams[region] = entry.get("streams", 0)
+    opportunities = []
 
-        if not regional_streams:
-            continue  # Not charting in any hot region
+    for key, track in seen.items():
+        artist_name = track["artist"]
+        reddit_score = track.get("score", 0)
+        logger.info(f"Looking up: {artist_name} (reddit score: {reddit_score})")
 
-        global_followers = fetch_artist_global_followers(artist)
-        if global_followers > MAX_GLOBAL_FOLLOWERS:
-            continue  # Already too well-known globally
+        deezer = fetch_deezer_artist(artist_name)
+        if not deezer:
+            logger.debug(f"  No Deezer result — skipping.")
+            continue
 
-        score = compute_arbitrage_score(regional_streams, global_followers)
+        deezer_fans = deezer.get("nb_fan", 0)
+        deezer_url = deezer.get("link", "")
+        arb_score = compute_arbitrage_score(reddit_score, deezer_fans)
+
+        spotify_url = fetch_spotify_url(sp, artist_name)
 
         opportunities.append({
-            "artist": artist,
-            "hot_regions": list(regional_streams.keys()),
-            "cold_regions": COLD_REGIONS,
-            "regional_streams": regional_streams,
-            "global_followers": global_followers,
-            "arbitrage_score": round(score, 4),
-            "spotify_url": track.get("url", ""),
-            "snapshot_date": datetime.utcnow().isoformat(),
+            "artist": artist_name,
+            "deezer_fans": deezer_fans,
+            "reddit_score": reddit_score,
+            "arbitrage_score": arb_score,
+            "deezer_url": deezer_url,
+            "spotify_url": spotify_url,
+            "subreddit": track.get("subreddit", ""),
+            "snapshot_date": datetime.now(timezone.utc).isoformat(),
         })
 
+        time.sleep(0.3)  # be polite to Deezer
+
+    # Rank by arbitrage score descending
     opportunities.sort(key=lambda x: x["arbitrage_score"], reverse=True)
+    for i, opp in enumerate(opportunities, start=1):
+        opp["rank"] = i
+
     return opportunities
 
 
-def save_results(opportunities: list[dict], output_path: str = "scoute/data/arbitrage_results.json") -> None:
+def save_results(opportunities: list[dict], output_path: str = OUTPUT_PATH) -> None:
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
         json.dump(opportunities, f, indent=2)
     logger.info(f"Saved {len(opportunities)} opportunities to {output_path}")
 
 
-def run(scout_tracks: list[dict]) -> list[dict]:
-    """Entry point called by main.py. Accepts Scout Agent output."""
+def run(scout_tracks: list[dict] | None = None) -> list[dict]:
+    """
+    Entry point called by main.py.
+    If scout_tracks is not provided, loads from scoute/data/scout_results.json.
+    """
+    if scout_tracks is None:
+        with open(SCOUT_RESULTS_PATH) as f:
+            scout_tracks = json.load(f)
+
     opportunities = find_arbitrage_opportunities(scout_tracks)
     save_results(opportunities)
-    logger.info(f"Arbitrage Agent complete — {len(opportunities)} opportunities identified.")
+    logger.info(f"Arbitrage Agent complete — {len(opportunities)} artists ranked.")
     return opportunities

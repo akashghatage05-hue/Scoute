@@ -50,7 +50,8 @@ nav{display:flex;align-items:center;gap:2rem;padding:1rem 2rem;background:rgba(8
 .table-wrap{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden}
 .arb-table{width:100%;border-collapse:collapse}
 .arb-table th{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#475569;padding:12px 16px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.06)}
-.arb-row{border-bottom:1px solid rgba(255,255,255,0.04);transition:all 0.2s}
+.arb-row{border-bottom:1px solid rgba(255,255,255,0.04);transition:opacity 0.3s ease,background 0.2s,box-shadow 0.2s}
+.arb-row.filtered-out{opacity:0.06;pointer-events:none}
 .arb-row:last-child{border-bottom:none}
 .arb-row:hover{background:rgba(34,211,238,0.04);box-shadow:inset 3px 0 0 #a855f7}
 .arb-row td{padding:14px 16px;font-size:14px;vertical-align:middle}
@@ -102,6 +103,25 @@ nav{display:flex;align-items:center;gap:2rem;padding:1rem 2rem;background:rgba(8
 .reader-card a{color:#22d3ee;text-decoration:none}
 .empty{text-align:center;padding:4rem 2rem;color:#475569;font-size:15px}
 .empty-icon{font-size:32px;display:block;margin-bottom:1rem}
+.filter-card{background:rgba(255,255,255,0.04);border:1px solid rgba(168,85,247,0.2);border-radius:16px;padding:1.5rem;margin-bottom:1.25rem;backdrop-filter:blur(10px)}
+.filter-grid{display:grid;grid-template-columns:2fr 1fr 1.5fr 1.5fr;gap:1rem;align-items:end}
+.filter-group{display:flex;flex-direction:column;gap:6px}
+.filter-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#a855f7;font-weight:600}
+.filter-input{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:#e2e8f0;padding:8px 12px;font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none;transition:border-color 0.2s;width:100%}
+.filter-input:focus{border-color:rgba(168,85,247,0.5)}
+.filter-select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23475569' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-color:rgba(255,255,255,0.06);padding-right:28px;cursor:pointer}
+.filter-select option{background:#0f0f1f;color:#e2e8f0}
+.filter-range{-webkit-appearance:none;appearance:none;width:100%;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;outline:none;cursor:pointer;margin-top:6px}
+.filter-range::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#22d3ee);cursor:pointer;box-shadow:0 0 8px rgba(168,85,247,0.5)}
+.filter-range::-moz-range-thumb{width:16px;height:16px;border:none;border-radius:50%;background:linear-gradient(135deg,#a855f7,#22d3ee);cursor:pointer}
+.fan-range{display:flex;align-items:center;gap:6px}
+.fan-sep{color:#475569;font-size:13px;flex-shrink:0}
+.filter-footer{display:flex;align-items:center;justify-content:space-between;margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.06)}
+.count-text{font-size:13px;color:#64748b}
+.count-text b{color:#a855f7;font-weight:600}
+.btn-reset{background:transparent;border:1px solid rgba(255,255,255,0.1);color:#64748b;padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all 0.2s}
+.btn-reset:hover{border-color:rgba(168,85,247,0.4);color:#a855f7}
+@media(max-width:768px){.filter-grid{grid-template-columns:1fr}.fan-range{flex-direction:column;align-items:stretch}.fan-sep{display:none}}
 </style>
 </head>
 <body>
@@ -129,6 +149,58 @@ for(let i=0;i<70;i++)dots.push({x:Math.random()*3000,y:Math.random()*2000,r:Math
 function draw(){ctx.clearRect(0,0,W,H);dots.forEach(d=>{d.x+=d.vx;d.y+=d.vy;if(d.x<0||d.x>W)d.vx*=-1;if(d.y<0||d.y>H)d.vy*=-1;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle=`rgba(168,85,247,${d.o})`;ctx.fill();});requestAnimationFrame(draw);}
 draw();
 function animateCounter(el,target,isFloat){let count=0;const step=target/60;const t=setInterval(()=>{count+=step;if(count>=target){count=target;clearInterval(t);}el.textContent=isFloat?count.toFixed(2):Math.floor(count);},16);}
+function applyFilters(){
+  const artist=(document.getElementById('f-artist')||{value:''}).value.toLowerCase();
+  const sub=(document.getElementById('f-sub')||{value:''}).value;
+  const scoreMin=parseFloat((document.getElementById('f-score')||{value:0}).value)||0;
+  const fansMinVal=(document.getElementById('f-fans-min')||{value:''}).value;
+  const fansMaxVal=(document.getElementById('f-fans-max')||{value:''}).value;
+  const fansMin=fansMinVal?parseInt(fansMinVal):0;
+  const fansMax=fansMaxVal?parseInt(fansMaxVal):Infinity;
+  const rows=document.querySelectorAll('.arb-row');
+  let shown=0;
+  rows.forEach(row=>{
+    const match=
+      row.dataset.artist.toLowerCase().includes(artist)&&
+      (!sub||row.dataset.sub===sub)&&
+      parseFloat(row.dataset.score)>=scoreMin&&
+      parseInt(row.dataset.fans)>=fansMin&&
+      parseInt(row.dataset.fans)<=fansMax;
+    if(match){
+      if(row._hideTimer){clearTimeout(row._hideTimer);row._hideTimer=null;}
+      row.style.display='';
+      requestAnimationFrame(()=>row.classList.remove('filtered-out'));
+      shown++;
+    }else{
+      if(!row.classList.contains('filtered-out')){
+        row.classList.add('filtered-out');
+        row._hideTimer=setTimeout(()=>{if(row.classList.contains('filtered-out'))row.style.display='none';},310);
+      }
+    }
+  });
+  const countEl=document.getElementById('f-count');
+  if(countEl)countEl.textContent=shown;
+}
+function resetFilters(){
+  const fa=document.getElementById('f-artist');if(fa)fa.value='';
+  const fs=document.getElementById('f-sub');if(fs)fs.value='';
+  const fsc=document.getElementById('f-score');if(fsc){fsc.value=0;const sv=document.getElementById('f-score-val');if(sv)sv.textContent='0.00';}
+  const fmin=document.getElementById('f-fans-min');if(fmin)fmin.value='';
+  const fmax=document.getElementById('f-fans-max');if(fmax)fmax.value='';
+  applyFilters();
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const fa=document.getElementById('f-artist');
+  const fs=document.getElementById('f-sub');
+  const fsc=document.getElementById('f-score');
+  const fmin=document.getElementById('f-fans-min');
+  const fmax=document.getElementById('f-fans-max');
+  if(fa)fa.addEventListener('input',applyFilters);
+  if(fs)fs.addEventListener('change',applyFilters);
+  if(fsc)fsc.addEventListener('input',function(){const sv=document.getElementById('f-score-val');if(sv)sv.textContent=parseFloat(this.value).toFixed(2);applyFilters();});
+  if(fmin)fmin.addEventListener('input',applyFilters);
+  if(fmax)fmax.addEventListener('input',applyFilters);
+});
 window.addEventListener('load',()=>{
   const c1=document.getElementById('c1');
   const c2=document.getElementById('c2');
@@ -180,7 +252,8 @@ def home():
         pct = min(100, score/max_score*100)
         sclass = 'score-high' if score>=1.0 else 'score-mid' if score>=0.5 else 'score-low'
         bar_bg = 'linear-gradient(90deg,#a855f7,#22d3ee)' if score>=1.0 else 'linear-gradient(90deg,#7c3aed,#a855f7)' if score>=0.5 else 'linear-gradient(90deg,#334155,#475569)'
-        rows += f"""<tr class="arb-row">
+        safe_name = name.replace('"', '&quot;')
+        rows += f"""<tr class="arb-row" data-artist="{safe_name}" data-sub="{sub}" data-score="{score}" data-fans="{fans}">
 <td><div class="rank-badge {rclass}">{rank}</div></td>
 <td><div class="artist-name">{name}</div></td>
 <td><span class="sub-pill">{sub}</span></td>
@@ -190,7 +263,43 @@ def home():
 <td><a href="{yt_url(name)}" target="_blank" class="link-btn link-yt">▶ YouTube</a><a href="{sp_url(name)}" target="_blank" class="link-btn link-sp">Spotify</a></td>
 </tr>"""
 
-    table = f'<div class="table-wrap"><table class="arb-table"><thead><tr><th>#</th><th>Artist</th><th>Subreddit</th><th>Arb Score</th><th>Deezer Fans</th><th>Reddit Score</th><th>Listen</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="empty"><span class="empty-icon">🎵</span>No data yet — run the pipeline.</div>'
+    subs = sorted({a.get('subreddit','') for a in arb if a.get('subreddit','')})
+    sub_opts = ''.join(f'<option value="{s}">{s}</option>' for s in subs)
+    total = len(arb)
+
+    filter_card = f"""<div class="filter-card">
+<div class="filter-grid">
+  <div class="filter-group">
+    <label class="filter-label">Search Artist</label>
+    <input type="text" id="f-artist" class="filter-input" placeholder="Type an artist name...">
+  </div>
+  <div class="filter-group">
+    <label class="filter-label">Subreddit</label>
+    <select id="f-sub" class="filter-input filter-select">
+      <option value="">All subreddits</option>
+      {sub_opts}
+    </select>
+  </div>
+  <div class="filter-group">
+    <label class="filter-label">Min Arb Score: <span id="f-score-val">0.00</span></label>
+    <input type="range" id="f-score" class="filter-range" min="0" max="2" step="0.01" value="0">
+  </div>
+  <div class="filter-group">
+    <label class="filter-label">Deezer Fans</label>
+    <div class="fan-range">
+      <input type="number" id="f-fans-min" class="filter-input" placeholder="Min" min="0" style="flex:1;min-width:0">
+      <span class="fan-sep">&#8211;</span>
+      <input type="number" id="f-fans-max" class="filter-input" placeholder="Max" min="0" style="flex:1;min-width:0">
+    </div>
+  </div>
+</div>
+<div class="filter-footer">
+  <span class="count-text">Showing <b id="f-count">{total}</b> of <b>{total}</b> artists</span>
+  <button class="btn-reset" onclick="resetFilters()">Reset filters</button>
+</div>
+</div>""" if arb else ""
+
+    table = f'{filter_card}<div class="table-wrap"><table class="arb-table"><thead><tr><th>#</th><th>Artist</th><th>Subreddit</th><th>Arb Score</th><th>Deezer Fans</th><th>Reddit Score</th><th>Listen</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="empty"><span class="empty-icon">🎵</span>No data yet — run the pipeline.</div>'
 
     body = f"""<div class="hero">
 <div class="hero-eye">◆ AI Music Intelligence Platform</div>

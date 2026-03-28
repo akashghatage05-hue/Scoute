@@ -665,6 +665,7 @@ def waitlist_admin():
     """Admin view of all waitlist signups — password protected."""
     pwd = request.args.get("password","")
     admin_pwd = os.environ.get("ADMIN_PASSWORD","")
+    print(f"URL pwd: '{pwd}' | ENV pwd: '{admin_pwd}' | Match: {pwd == admin_pwd}")
     if not admin_pwd or pwd != admin_pwd:
         return """<html><body style="background:#080812;color:#e2e8f0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
 <form method="GET" style="background:rgba(255,255,255,0.04);border:1px solid rgba(168,85,247,0.25);border-radius:16px;padding:2rem;display:flex;flex-direction:column;gap:12px;min-width:280px">

@@ -591,14 +591,17 @@ def view_email(filename):
 
 @app.route("/debug")
 def debug():
-    key = os.environ.get("JSONBIN_KEY", "NOT SET")
-    import requests
-    test = requests.get(
-        "https://api.jsonbin.io/v3/b",
-        headers={"X-Master-Key": key},
-        timeout=5
-    )
-    return f"Key prefix: {key[:15]}... | JSONbin status: {test.status_code} | Response: {test.text[:200]}"
+    import requests, os
+    key = os.environ.get("JSONBIN_KEY", "NOT_SET")
+    try:
+        r = requests.get(
+            "https://api.jsonbin.io/v3/b/69c7d0b06860e0745bfb789b/latest",
+            headers={"X-Master-Key": key},
+            timeout=10
+        )
+        return f"Status: {r.status_code} | Key length: {len(key)} | First 100 chars: {r.text[:100]}"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 @app.route("/run", methods=["POST"])
 def run_pipeline():

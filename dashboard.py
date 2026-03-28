@@ -182,13 +182,15 @@ nav{display:flex;align-items:center;gap:2rem;padding:1rem 2rem;background:rgba(8
 .waitlist-submit:hover{transform:scale(1.02);box-shadow:0 0 24px rgba(168,85,247,0.4)}
 .waitlist-success{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:12px;padding:1rem 1.25rem;color:#22c55e;font-size:14px;font-weight:500;margin-top:1rem;display:none}
 /* Waitlist modal inside pitch modal */
-.waitlist-mini{padding:1.25rem 1.5rem;border-top:1px solid rgba(255,255,255,0.06)}
-.waitlist-mini-title{font-size:13px;font-weight:600;color:#a855f7;margin-bottom:10px}
+.waitlist-mini{padding:1.25rem 1.5rem;border-top:2px solid rgba(168,85,247,0.2);margin-top:4px}
+.waitlist-mini-title{font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:4px}
+.waitlist-mini-sub{font-size:12px;color:#64748b;margin-bottom:12px}
 .waitlist-mini-row{display:flex;gap:8px}
-.waitlist-mini-input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;padding:8px 11px;font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none}
+.waitlist-mini-input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#e2e8f0;padding:10px 11px;font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none}
 .waitlist-mini-input:focus{border-color:rgba(168,85,247,0.4)}
-.waitlist-mini-btn{background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;white-space:nowrap}
-.waitlist-mini-success{font-size:12px;color:#22c55e;margin-top:8px;display:none}
+.waitlist-mini-btn{background:#a855f7;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;white-space:nowrap;transition:background 0.2s}
+.waitlist-mini-btn:hover{background:#9333ea}
+.waitlist-mini-success{font-size:13px;color:#22c55e;margin-top:10px;display:none;font-weight:500}
 /* Admin waitlist table */
 .admin-table{width:100%;border-collapse:collapse;font-size:14px}
 .admin-table th{text-align:left;padding:10px 14px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#475569;border-bottom:1px solid rgba(255,255,255,0.08)}
@@ -539,14 +541,15 @@ def home():
 </div>
 <div id="modal-matches"></div>
 <div class="waitlist-mini">
-  <div class="waitlist-mini-title">&#9993; Join Waitlist — Get AI pitch emails when they launch</div>
+  <div class="waitlist-mini-title">&#10024; Want these emails written automatically?</div>
+  <div class="waitlist-mini-sub">Join the waitlist — first 50 get 3 months free</div>
   <input type="hidden" id="modal-waitlist-artist" value="">
   <div class="waitlist-mini-row">
     <input class="waitlist-mini-input" id="modal-waitlist-name" type="text" placeholder="Your name">
     <input class="waitlist-mini-input" id="modal-waitlist-email" type="email" placeholder="Email address">
     <button class="waitlist-mini-btn" onclick="submitWaitlistMini()">Join</button>
   </div>
-  <div class="waitlist-mini-success" id="modal-waitlist-success">&#10003; You're on the list! We'll be in touch soon.</div>
+  <div class="waitlist-mini-success" id="modal-waitlist-success">&#127881; You're on the list! We'll email you at launch.</div>
 </div>
 </div>
 </div>"""

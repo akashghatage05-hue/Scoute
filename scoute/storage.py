@@ -137,7 +137,8 @@ def pull_from_jsonbin(bin_name: str) -> dict | list | None:
             timeout=10,
         )
         resp.raise_for_status()
-        data = resp.json().get("record")
+        body = resp.json()
+        data = body.get("record") if isinstance(body, dict) else body
         count = len(data) if isinstance(data, list) else 1
         logger.info(f"JSONbin '{bin_name}' pulled (bin {bin_id}, {count} records)")
         return data

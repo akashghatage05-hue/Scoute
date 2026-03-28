@@ -71,7 +71,7 @@ nav{display:flex;align-items:center;gap:2rem;padding:1rem 2rem;background:rgba(8
 .score-val{font-size:13px;font-weight:600;min-width:38px;text-align:right}
 .score-high{color:#22d3ee}.score-mid{color:#a855f7}.score-low{color:#64748b}
 .meta-val{color:#94a3b8;font-size:13px}
-.link-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;text-decoration:none;transition:all 0.2s;margin-right:5px}
+.link-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:500;text-decoration:none;transition:all 0.2s;white-space:nowrap;line-height:1}
 .link-yt{background:rgba(34,211,238,0.08);color:#22d3ee;border:1px solid rgba(34,211,238,0.2)}
 .link-yt:hover{background:rgba(34,211,238,0.18)}
 .link-sp{background:rgba(34,197,94,0.08);color:#22c55e;border:1px solid rgba(34,197,94,0.2)}
@@ -434,7 +434,7 @@ def home():
 <td data-sort="{score}"><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill" data-pct="{pct:.1f}" style="background:{bar_bg}"></div></div><span class="score-val {sclass}">{score:.2f}</span></div></td>
 <td data-sort="{fans}"><span class="meta-val">{fans:,}</span></td>
 <td data-sort="{reddit}"><span class="meta-val">{reddit:,}</span></td>
-<td><div style="display:flex;flex-direction:row;gap:6px;align-items:center;"><a href="{yt_url(name)}" target="_blank" class="link-btn link-yt">▶ YouTube</a><a href="{sp_url(name)}" target="_blank" class="link-btn link-sp">Spotify</a></div></td>
+<td><div style="display:flex;flex-direction:row;gap:6px;align-items:center;flex-wrap:nowrap;"><a href="{yt_url(name)}" target="_blank" class="link-btn link-yt">▶ YouTube</a><a href="{sp_url(name)}" target="_blank" class="link-btn link-sp">Spotify</a></div></td>
 <td data-sort="{n_stars}">{star_html(score)}</td>
 <td><button class="btn-pitch" onclick="openPitchModal(this)">Match Curators</button></td>
 </tr>"""

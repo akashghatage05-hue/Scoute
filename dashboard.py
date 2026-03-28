@@ -377,27 +377,19 @@ def load_json(path):
     except:
         return []
 
-def load_data(path: Path, bin_id_env: str) -> list:
+def load_data(path: Path, bin_name: str) -> list:
     """
-    Read from JSONbin.io when configured, fall back to local file.
-    This lets the Railway dashboard read data uploaded by the local pipeline.
+    Pull from JSONbin when JSONBIN_KEY is set, fall back to local file.
+    Bin IDs are read from .jsonbin_ids.json (written by the local pipeline).
     """
-    bin_id = os.environ.get(bin_id_env, "")
-    master_key = os.environ.get("JSONBIN_MASTER_KEY", "")
-    if bin_id and master_key:
+    if os.environ.get("JSONBIN_KEY"):
         try:
-            import requests as req
-            resp = req.get(
-                f"https://api.jsonbin.io/v3/b/{bin_id}/latest",
-                headers={"X-Master-Key": master_key, "X-Bin-Meta": "false"},
-                timeout=10,
-            )
-            resp.raise_for_status()
-            data = resp.json().get("record")
+            from scoute.storage import pull_from_jsonbin
+            data = pull_from_jsonbin(bin_name)
             if data is not None:
                 return data
         except Exception:
-            pass  # fall through to local file
+            pass
     return load_json(path)
 
 def yt_url(name): return f"https://music.youtube.com/search?q={name.replace(' ','+')}"
@@ -424,8 +416,8 @@ def market_tags_html(subreddit):
 
 @app.route("/")
 def home():
-    arb = load_data(ARB_PATH, "JSONBIN_ARB_BIN_ID")
-    scout = load_data(SCOUT_PATH, "JSONBIN_SCOUT_BIN_ID")
+    arb = load_data(ARB_PATH, "arbitrage_results")
+    scout = load_data(SCOUT_PATH, "scout_results")
     emails = list(EMAILS_DIR.glob("*.md")) if EMAILS_DIR.exists() else []
     top_score = arb[0]['arbitrage_score'] if arb else 0
 
@@ -519,7 +511,7 @@ def home():
     )
     source_badge = (
         '<span style="font-size:11px;color:#22d3ee;letter-spacing:1px;margin-left:8px">&#9728; JSONbin</span>'
-        if (on_railway or os.environ.get("JSONBIN_MASTER_KEY")) else ""
+        if (on_railway or os.environ.get("JSONBIN_KEY")) else ""
     )
 
     body = f"""<div class="hero">

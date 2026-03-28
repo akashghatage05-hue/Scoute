@@ -22,7 +22,7 @@ import sys
 from dotenv import load_dotenv
 
 from scoute.agents import scout, arbitrage, ghostwriter
-from scoute import jsonbin_store
+from scoute import storage
 
 # ---------------------------------------------------------------------------
 # Setup
@@ -54,9 +54,13 @@ def run_all() -> None:
     if not trending_tracks:
         logger.warning("Scout Agent returned no tracks. Using empty list for downstream agents.")
 
+    storage.push_to_jsonbin(trending_tracks, "scout_results")
+
     # Stage 2 — Arbitrage
     logger.info("--- Stage 2: Arbitrage Agent ---")
     opportunities = arbitrage.run(trending_tracks)
+
+    storage.push_to_jsonbin(opportunities, "arbitrage_results")
 
     if not opportunities:
         logger.warning("Arbitrage Agent found no opportunities. Ghostwriter will not run.")
@@ -70,12 +74,6 @@ def run_all() -> None:
     logger.info(f"Trending tracks found : {len(trending_tracks)}")
     logger.info(f"Arbitrage opportunities: {len(opportunities)}")
     logger.info(f"Emails generated       : {len(email_files)}")
-    for path in email_files:
-        logger.info(f"  -> {path}")
-
-    # Upload results to JSONbin so the Railway dashboard can read them
-    logger.info("--- Uploading results to JSONbin.io ---")
-    jsonbin_store.upload_results()
 
 
 def run_agent(agent_name: str) -> None:

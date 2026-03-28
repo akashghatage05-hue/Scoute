@@ -27,6 +27,7 @@ import re
 import json
 import logging
 from datetime import datetime
+from pathlib import Path
 
 import anthropic
 
@@ -426,4 +427,30 @@ def run(opportunities: list[dict]) -> list[str]:
             saved_files.append(filepath)
 
     logger.info(f"Ghostwriter Agent complete - {len(saved_files)} emails generated.")
+
+    # Push emails to JSONbin so Railway dashboard can read them
+    if saved_files and os.environ.get("JSONBIN_KEY"):
+        try:
+            from scoute.storage import push_to_jsonbin
+            email_records = []
+            for fp in saved_files:
+                p = Path(fp) if not hasattr(fp, 'name') else fp
+                p = Path(fp)
+                parts = p.stem.split("_")
+                artist = parts[0].replace("-", " ").title() if parts else p.stem
+                curator = parts[1].replace("-", " ").title() if len(parts) > 1 else ""
+                raw_date = parts[2] if len(parts) > 2 else ""
+                date_fmt = f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:]}" if len(raw_date) == 8 else raw_date
+                content = p.read_text(encoding="utf-8") if p.exists() else ""
+                email_records.append({
+                    "filename": p.name,
+                    "artist": artist,
+                    "curator": curator,
+                    "date": date_fmt,
+                    "content": content,
+                })
+            push_to_jsonbin(email_records, "emails_list")
+        except Exception as exc:
+            logger.warning(f"Failed to push emails to JSONbin: {exc}")
+
     return saved_files

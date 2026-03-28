@@ -345,7 +345,7 @@ function openPitchModal(btn){
       <div style="width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;${i===0?'background:rgba(234,179,8,0.12);color:#eab308;border:1px solid rgba(234,179,8,0.3)':i===1?'background:rgba(148,163,184,0.12);color:#94a3b8;border:1px solid rgba(148,163,184,0.3)':'background:rgba(180,120,60,0.12);color:#cd8a4a;border:1px solid rgba(180,120,60,0.3)'}">${i+1}</div>
       <div class="match-info"><div class="match-name">${c.name}</div><div class="match-curator">${c.curator}</div></div>
       <span class="match-followers">${c.followers.toLocaleString()}</span>
-      <button class="btn-generate" disabled title="Add Anthropic credits to enable">Generate</button>
+      <button class="btn-generate" onclick="alert('Ghostwriter requires Anthropic API credits. Add credits at console.anthropic.com to enable email generation.')">Generate</button>
     </div>`).join(''):'<div class="modal-no-match">No genre matches found for this subreddit.</div>';
   document.getElementById('modal-matches').innerHTML=html;
   document.getElementById('pitch-modal').style.display='flex';
@@ -537,7 +537,7 @@ def home():
 
 @app.route("/scout")
 def scout():
-    data = load_json(SCOUT_PATH)
+    data = load_data(SCOUT_PATH, "scout_results")
     rows = ""
     for i,t in enumerate(data):
         artist=t.get('artist',''); song=t.get('song',''); sub=t.get('subreddit','')
@@ -556,25 +556,72 @@ def scout():
 
 @app.route("/emails")
 def emails():
-    files = sorted(EMAILS_DIR.glob("*.md"), reverse=True) if EMAILS_DIR.exists() else []
     cards = ""
-    for f in files:
-        parts=f.stem.split("_"); artist=parts[0].replace("-"," ").title() if parts else f.stem
-        curator=parts[1].replace("-"," ").title() if len(parts)>1 else ""; raw_date=parts[2] if len(parts)>2 else ""
-        date_fmt=f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:]}" if len(raw_date)==8 else raw_date
-        dp=f'<span class="pill pill-c">{date_fmt}</span>' if date_fmt else ""
-        cards += f"""<a href="/emails/{f.name}" class="email-card">
+    email_records = []
+
+    # Try JSONbin first when key is set
+    if os.environ.get("JSONBIN_KEY"):
+        try:
+            from scoute.storage import pull_from_jsonbin
+            data = pull_from_jsonbin("emails_list")
+            if data:
+                email_records = data
+        except Exception:
+            pass
+
+    if email_records:
+        for e in email_records:
+            name = e.get("filename",""); artist = e.get("artist",""); curator = e.get("curator",""); date_fmt = e.get("date",""); size_kb = max(1, len(e.get("content","")) // 1024)
+            dp = f'<span class="pill pill-c">{date_fmt}</span>' if date_fmt else ""
+            cards += f"""<a href="/emails/{name}" class="email-card">
+<div class="email-icon">✉</div>
+<div class="email-title">{artist}</div>
+<div class="email-sub">{"Curator: "+curator if curator else ""}</div>
+<div class="email-foot">{dp}<span class="pill">{size_kb} KB</span></div></a>"""
+        count = len(email_records)
+    else:
+        files = sorted(EMAILS_DIR.glob("*.md"), reverse=True) if EMAILS_DIR.exists() else []
+        for f in files:
+            parts=f.stem.split("_"); artist=parts[0].replace("-"," ").title() if parts else f.stem
+            curator=parts[1].replace("-"," ").title() if len(parts)>1 else ""; raw_date=parts[2] if len(parts)>2 else ""
+            date_fmt=f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:]}" if len(raw_date)==8 else raw_date
+            dp=f'<span class="pill pill-c">{date_fmt}</span>' if date_fmt else ""
+            cards += f"""<a href="/emails/{f.name}" class="email-card">
 <div class="email-icon">✉</div>
 <div class="email-title">{artist}</div>
 <div class="email-sub">{"Curator: "+curator if curator else ""}</div>
 <div class="email-foot">{dp}<span class="pill">{max(1,f.stat().st_size//1024)} KB</span></div></a>"""
+        count = len(files)
+
     if not cards: cards = '<div class="empty"><span class="empty-icon">📭</span>No emails yet. Run the Ghostwriter.</div>'
-    body = f"""<div class="page-head"><div><h1>Generated Pitch Emails</h1><p>{len(files)} emails ready</p></div><a href="/" class="btn-back">← Home</a></div>
+    body = f"""<div class="page-head"><div><h1>Generated Pitch Emails</h1><p>{count} emails ready</p></div><a href="/" class="btn-back">← Home</a></div>
 <div class="section"><div class="email-grid">{cards}</div></div>"""
     return render_template_string(HTML, page_title="Emails", active="emails", body=body)
 
 @app.route("/emails/<filename>")
 def view_email(filename):
+    # Try JSONbin first
+    if os.environ.get("JSONBIN_KEY"):
+        try:
+            from scoute.storage import pull_from_jsonbin
+            data = pull_from_jsonbin("emails_list")
+            if data:
+                match = next((e for e in data if e.get("filename") == filename), None)
+                if match:
+                    raw = match["content"]
+                    html = re.sub(r'^# (.+)$', r'<h1>\1</h1>', raw, flags=re.MULTILINE)
+                    html = re.sub(r'^## (.+)$', r'<h2 style="color:#a855f7;margin:1rem 0 0.5rem">\1</h2>', html, flags=re.MULTILINE)
+                    html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
+                    html = re.sub(r'^---$', r'<hr>', html, flags=re.MULTILINE)
+                    html = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2" target="_blank">\1</a>', html)
+                    html = html.replace("\n","<br>")
+                    title = Path(filename).stem.replace("-"," ").replace("_"," — ",1).title()
+                    body = f"""<div class="page-head"><div><h1>{title}</h1><p>{filename}</p></div><a href="/emails" class="btn-back">← All Emails</a></div>
+<div class="reader-wrap"><div class="reader-card">{html}</div></div>"""
+                    return render_template_string(HTML, page_title=title, active="emails", body=body)
+        except Exception:
+            pass
+
     fp = EMAILS_DIR / Path(filename).name
     if not fp.exists(): return redirect("/emails")
     raw = fp.read_text(encoding="utf-8")

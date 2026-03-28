@@ -465,7 +465,7 @@ def home():
 <div class="stat-card"><div class="stat-num" id="c1" data-val="{len(scout)}">0</div><div class="stat-label">Trending Tracks</div></div>
 <div class="stat-card"><div class="stat-num" id="c2" data-val="{len(arb)}">0</div><div class="stat-label">Artists Ranked</div></div>
 <div class="stat-card"><div class="stat-num" id="c3" data-val="{len(emails)}">0</div><div class="stat-label">Emails Generated</div></div>
-<div class="stat-card"><div class="stat-num" id="c4" data-val="{top_score:.2f}">0</div><div class="stat-label">Top Arb Score</div></div>
+<div class="stat-card"><div class="stat-num" id="c4" data-val="{top_score:.2f}">0</div><div class="stat-label">Top Breakout Score</div></div>
 </div>"""
 
     max_score = arb[0]['arbitrage_score'] if arb else 1
@@ -513,7 +513,7 @@ def home():
     </select>
   </div>
   <div class="filter-group">
-    <label class="filter-label">Min Arb Score: <span id="f-score-val">0.00</span></label>
+    <label class="filter-label">Min Breakout Score: <span id="f-score-val">0.00</span></label>
     <input type="range" id="f-score" class="filter-range" min="0" max="2" step="0.01" value="0">
   </div>
   <div class="filter-group">
@@ -531,7 +531,7 @@ def home():
 </div>
 </div>""" if arb else ""
 
-    table = f'{filter_card}<div class="table-wrap"><table class="arb-table"><thead><tr><th>#</th><th>Artist</th><th>Subreddit</th><th>Arb Score</th><th>Deezer Fans</th><th>Reddit Score</th><th>Listen</th><th class="col-potential">Potential</th><th class="col-pitch" style="display:none">Pitch</th><th class="col-market" style="display:none">Market Gap</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="empty"><span class="empty-icon">🎵</span>No data yet — run the pipeline.</div>'
+    table = f'{filter_card}<div class="table-wrap"><table class="arb-table"><thead><tr><th>#</th><th>Artist</th><th>Subreddit</th><th>Breakout Score</th><th>Deezer Fans</th><th>Reddit Score</th><th>Listen</th><th class="col-potential">Potential</th><th class="col-pitch" style="display:none">Pitch</th><th class="col-market" style="display:none">Market Gap</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="empty"><span class="empty-icon">🎵</span>No data yet — run the pipeline.</div>'
 
     modal = """<div id="pitch-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closePitchModal()">
 <div class="modal-card">
@@ -557,12 +557,12 @@ def home():
     on_railway = bool(os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_PROJECT_ID"))
     use_jsonbin = bool(os.environ.get("JSONBIN_KEY"))
     run_btn = (
-        '<form method="POST" action="/run" style="margin:0"><button type="submit" class="btn-run">&#9728; Refresh from Cloud</button></form>'
+        '<form method="POST" action="/run" style="margin:0"><button type="submit" class="btn-run">&#8635; Refresh Data</button></form>'
         if use_jsonbin else
         '<form method="POST" action="/run" style="margin:0"><button type="submit" class="btn-run">&#9654; Run Pipeline</button></form>'
     )
     source_badge = (
-        '<span style="font-size:11px;color:#22d3ee;letter-spacing:1px;margin-left:8px">&#9728; JSONbin</span>'
+        ''
         if (on_railway or os.environ.get("JSONBIN_KEY")) else ""
     )
 

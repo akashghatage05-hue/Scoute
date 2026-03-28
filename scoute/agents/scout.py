@@ -24,6 +24,7 @@ import re
 import json
 import logging
 import time
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
 import requests
@@ -63,9 +64,8 @@ SUBREDDITS = [
 ]
 
 REDDIT_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept": "application/json",
-    "Accept-Language": "en-US,en;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml,application/json",
 }
 
 # Most music subreddits use "Artist - Song Title [genre] (year)" in post titles.
@@ -144,10 +144,47 @@ def _parse_title(title: str) -> tuple[str, str] | None:
     return artist, song
 
 
+def _fetch_reddit_rss(sub_name: str, limit: int) -> list[dict]:
+    """
+    Fallback: fetch subreddit hot posts via RSS when .json returns 403.
+    Parses XML with stdlib xml.etree.ElementTree — no extra dependencies.
+    """
+    rss_url = f"https://www.reddit.com/r/{sub_name}/hot.rss?limit={limit}"
+    resp = requests.get(rss_url, headers=REDDIT_HEADERS, timeout=10)
+    resp.raise_for_status()
+
+    root = ET.fromstring(resp.text)
+    tracks: list[dict] = []
+    for item in root.findall(".//item"):
+        title_el = item.find("title")
+        link_el = item.find("link")
+        if title_el is None:
+            continue
+        parsed = _parse_title(title_el.text or "")
+        if not parsed:
+            continue
+        artist, song = parsed
+        tracks.append({
+            "artist": artist,
+            "song": song,
+            "source": "reddit",
+            "subreddit": sub_name,
+            "mentions": 1,
+            "score": MIN_SCORE,
+            "upvotes": MIN_SCORE,
+            "comments": 0,
+            "sentiment": 0.0,
+            "first_seen": datetime.now(timezone.utc).isoformat(),
+            "url": link_el.text if link_el is not None else "",
+            "reddit_url": link_el.text if link_el is not None else "",
+        })
+    return tracks
+
+
 def fetch_reddit_trending(limit: int = 100) -> list[dict]:
     """
     Fetch hot posts from music subreddits using Reddit's public .json feeds.
-    No API key required — uses a browser-like User-Agent header.
+    Falls back to RSS for each subreddit that returns 403 (cloud IP blocks).
     Scores each track by upvotes + comment count combined.
     """
     logger.info("Fetching Reddit trending tracks...")
@@ -157,6 +194,16 @@ def fetch_reddit_trending(limit: int = 100) -> list[dict]:
         url = f"https://www.reddit.com/r/{sub_name}/hot.json?limit={limit}"
         try:
             resp = requests.get(url, headers=REDDIT_HEADERS, timeout=10)
+            if resp.status_code == 403:
+                logger.info(f"r/{sub_name}: .json blocked (403), trying RSS fallback...")
+                try:
+                    rss_tracks = _fetch_reddit_rss(sub_name, limit)
+                    tracks.extend(rss_tracks)
+                    logger.info(f"r/{sub_name}: RSS got {len(rss_tracks)} tracks")
+                except Exception as rss_err:
+                    logger.warning(f"r/{sub_name}: RSS fallback failed: {rss_err}")
+                time.sleep(1)
+                continue
             resp.raise_for_status()
             posts = resp.json()["data"]["children"]
         except Exception as e:
@@ -206,14 +253,13 @@ def fetch_reddit_trending(limit: int = 100) -> list[dict]:
 
 
 def fetch_twitter_trending(limit: int = 100) -> list[dict]:
+    if not os.environ.get("TWITTER_BEARER_TOKEN"):
+        return []
     """
     Search recent tweets for music hashtags that contain Spotify or Apple Music links.
     Ranks by retweet + like count as a proxy for velocity.
     Returns a list of track dicts.
     """
-    if not os.environ.get("TWITTER_BEARER_TOKEN"):
-        logger.info("Twitter token not set — skipping Twitter.")
-        return []
     logger.info("Fetching Twitter trending tracks...")
     client = _twitter_client()
     tracks: list[dict] = []
@@ -303,7 +349,7 @@ def save_results(tracks: list[dict], output_path: str = "scoute/data/scout_resul
 def run() -> list[dict]:
     """Entry point called by main.py."""
     reddit_tracks = fetch_reddit_trending()
-    # twitter_tracks = fetch_twitter_trending()
+    twitter_tracks = fetch_twitter_trending()
     all_tracks = deduplicate(reddit_tracks + twitter_tracks)
     save_results(all_tracks)
     logger.info(f"Scout Agent complete — {len(all_tracks)} unique trending tracks found.")

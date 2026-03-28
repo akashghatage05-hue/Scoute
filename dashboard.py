@@ -51,7 +51,10 @@ nav{display:flex;align-items:center;gap:2rem;padding:1rem 2rem;background:rgba(8
 .btn-back:hover{background:rgba(255,255,255,0.08);color:#e2e8f0}
 .table-wrap{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden}
 .arb-table{width:100%;border-collapse:collapse}
-.arb-table th{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#475569;padding:12px 16px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.06)}
+.arb-table th{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#475569;padding:12px 16px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;user-select:none;white-space:nowrap}
+.arb-table th:hover{color:#a855f7}
+.sort-ind{margin-left:4px;opacity:0.5;font-size:10px}
+.sort-ind.active{opacity:1;color:#a855f7}
 .arb-row{border-bottom:1px solid rgba(255,255,255,0.04);transition:opacity 0.3s ease,background 0.2s,box-shadow 0.2s}
 .arb-row.filtered-out{opacity:0.06;pointer-events:none}
 .arb-row:last-child{border-bottom:none}
@@ -59,9 +62,7 @@ nav{display:flex;align-items:center;gap:2rem;padding:1rem 2rem;background:rgba(8
 .arb-row td{padding:14px 16px;font-size:14px;vertical-align:middle}
 .rank-badge{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
 .rank-1{background:rgba(234,179,8,0.12);color:#eab308;border:1px solid rgba(234,179,8,0.3)}
-.rank-2{background:rgba(148,163,184,0.12);color:#94a3b8;border:1px solid rgba(148,163,184,0.3)}
-.rank-3{background:rgba(180,120,60,0.12);color:#cd8a4a;border:1px solid rgba(180,120,60,0.3)}
-.rank-n{background:rgba(255,255,255,0.04);color:#475569;border:1px solid rgba(255,255,255,0.08)}
+.rank-2,.rank-3,.rank-n{background:rgba(255,255,255,0.04);color:#475569;border:1px solid rgba(255,255,255,0.08)}
 .artist-name{font-weight:600;color:#e2e8f0;font-size:15px}
 .sub-pill{display:inline-block;background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.2);border-radius:6px;padding:2px 9px;font-size:11px}
 .score-bar-wrap{display:flex;align-items:center;gap:10px}
@@ -164,10 +165,10 @@ nav{display:flex;align-items:center;gap:2rem;padding:1rem 2rem;background:rgba(8
 .waitlist-mini{padding:1.25rem 1.5rem;border-top:2px solid rgba(168,85,247,0.2);margin-top:4px}
 .waitlist-mini-title{font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:4px}
 .waitlist-mini-sub{font-size:12px;color:#64748b;margin-bottom:12px}
-.waitlist-mini-row{display:flex;gap:8px}
-.waitlist-mini-input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#e2e8f0;padding:10px 11px;font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none}
+.waitlist-mini-row{display:flex;flex-direction:column;gap:8px}
+.waitlist-mini-input{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#e2e8f0;padding:10px 11px;font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none;box-sizing:border-box}
 .waitlist-mini-input:focus{border-color:rgba(168,85,247,0.4)}
-.waitlist-mini-btn{background:#a855f7;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;white-space:nowrap;transition:background 0.2s}
+.waitlist-mini-btn{width:100%;background:#a855f7;color:#fff;border:none;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:background 0.2s}
 .waitlist-mini-btn:hover{background:#9333ea}
 .waitlist-mini-success{font-size:13px;color:#22c55e;margin-top:10px;display:none;font-weight:500}
 /* Admin waitlist table */
@@ -331,6 +332,29 @@ async function submitWaitlistMini(){
   document.getElementById('modal-waitlist-email').value='';
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePitchModal();});
+// ── Table sorting ─────────────────────────────────────────────────────────────
+let _sortCol=3,_sortAsc=false;
+function sortTable(col,type){
+  const tbody=document.querySelector('#arb-table tbody');
+  if(!tbody)return;
+  const rows=[...tbody.querySelectorAll('tr')];
+  if(_sortCol===col){_sortAsc=!_sortAsc;}else{_sortCol=col;_sortAsc=false;}
+  rows.sort((a,b)=>{
+    const ac=a.cells[col],bc=b.cells[col];
+    if(!ac||!bc)return 0;
+    const av=ac.dataset.sort!==undefined?ac.dataset.sort:ac.textContent.trim();
+    const bv=bc.dataset.sort!==undefined?bc.dataset.sort:bc.textContent.trim();
+    let cmp=0;
+    if(type==='float')cmp=parseFloat(av||0)-parseFloat(bv||0);
+    else if(type==='int')cmp=parseInt(av||0)-parseInt(bv||0);
+    else cmp=av.localeCompare(bv);
+    return _sortAsc?cmp:-cmp;
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+  document.querySelectorAll('.sort-ind').forEach(el=>{el.textContent='';el.classList.remove('active');});
+  const si=document.getElementById('si'+col);
+  if(si){si.textContent=_sortAsc?'\u2193':'\u2191';si.classList.add('active');}
+}
 window.addEventListener('load',()=>{
   const c1=document.getElementById('c1');
   const c2=document.getElementById('c2');
@@ -402,15 +426,16 @@ def home():
         sclass = 'score-high' if score>=1.0 else 'score-mid' if score>=0.5 else 'score-low'
         bar_bg = 'linear-gradient(90deg,#a855f7,#22d3ee)' if score>=1.0 else 'linear-gradient(90deg,#7c3aed,#a855f7)' if score>=0.5 else 'linear-gradient(90deg,#334155,#475569)'
         safe_name = name.replace('"', '&quot;')
+        n_stars = 5 if score > 1.0 else 4 if score > 0.7 else 3 if score > 0.5 else 2 if score > 0.3 else 1
         rows += f"""<tr class="arb-row" data-artist="{safe_name}" data-sub="{sub}" data-score="{score}" data-fans="{fans}">
-<td><div class="rank-badge {rclass}">{rank}</div></td>
+<td data-sort="{rank}"><div class="rank-badge {rclass}">{rank}</div></td>
 <td><div class="artist-name">{name}</div></td>
 <td><span class="sub-pill">{sub}</span></td>
-<td><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill" data-pct="{pct:.1f}" style="background:{bar_bg}"></div></div><span class="score-val {sclass}">{score:.2f}</span></div></td>
-<td><span class="meta-val">{fans:,}</span></td>
-<td><span class="meta-val">{reddit:,}</span></td>
-<td><a href="{yt_url(name)}" target="_blank" class="link-btn link-yt">▶ YouTube</a><a href="{sp_url(name)}" target="_blank" class="link-btn link-sp">Spotify</a></td>
-<td>{star_html(score)}</td>
+<td data-sort="{score}"><div class="score-bar-wrap"><div class="score-bar"><div class="score-fill" data-pct="{pct:.1f}" style="background:{bar_bg}"></div></div><span class="score-val {sclass}">{score:.2f}</span></div></td>
+<td data-sort="{fans}"><span class="meta-val">{fans:,}</span></td>
+<td data-sort="{reddit}"><span class="meta-val">{reddit:,}</span></td>
+<td><div style="display:flex;flex-direction:row;gap:6px;align-items:center;"><a href="{yt_url(name)}" target="_blank" class="link-btn link-yt">▶ YouTube</a><a href="{sp_url(name)}" target="_blank" class="link-btn link-sp">Spotify</a></div></td>
+<td data-sort="{n_stars}">{star_html(score)}</td>
 <td><button class="btn-pitch" onclick="openPitchModal(this)">Match Curators</button></td>
 </tr>"""
 
@@ -450,7 +475,7 @@ def home():
 </div>
 </div>""" if arb else ""
 
-    table = f'{filter_card}<div class="table-wrap"><table class="arb-table"><thead><tr><th>#</th><th>Artist</th><th>Subreddit</th><th>Breakout Score</th><th>Deezer Fans</th><th>Reddit Score</th><th>Listen</th><th>Potential</th><th>Match Curators</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="empty"><span class="empty-icon">🎵</span>No data yet — run the pipeline.</div>'
+    table = f'{filter_card}<div class="table-wrap"><table class="arb-table" id="arb-table"><thead><tr><th onclick="sortTable(0,\'int\')">#<span class="sort-ind" id="si0"></span></th><th onclick="sortTable(1,\'str\')">Artist<span class="sort-ind" id="si1"></span></th><th onclick="sortTable(2,\'str\')">Subreddit<span class="sort-ind" id="si2"></span></th><th onclick="sortTable(3,\'float\')" class="sort-active">Breakout Score<span class="sort-ind active" id="si3">&#8593;</span></th><th onclick="sortTable(4,\'int\')">Deezer Fans<span class="sort-ind" id="si4"></span></th><th onclick="sortTable(5,\'int\')">Reddit Score<span class="sort-ind" id="si5"></span></th><th>Listen</th><th onclick="sortTable(7,\'int\')">Potential<span class="sort-ind" id="si7"></span></th><th>Match Curators</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="empty"><span class="empty-icon">🎵</span>No data yet — run the pipeline.</div>'
 
     modal = """<div id="pitch-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closePitchModal()">
 <div class="modal-card">

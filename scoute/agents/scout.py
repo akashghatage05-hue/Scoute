@@ -303,7 +303,7 @@ def save_results(tracks: list[dict], output_path: str = "scoute/data/scout_resul
 def run() -> list[dict]:
     """Entry point called by main.py."""
     reddit_tracks = fetch_reddit_trending()
-    // twitter_tracks = fetch_twitter_trending()
+    twitter_tracks = fetch_twitter_trending()
     all_tracks = deduplicate(reddit_tracks + twitter_tracks)
     save_results(all_tracks)
     logger.info(f"Scout Agent complete — {len(all_tracks)} unique trending tracks found.")

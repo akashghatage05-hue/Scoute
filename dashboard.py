@@ -504,9 +504,10 @@ def home():
 </div>"""
 
     on_railway = bool(os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_PROJECT_ID"))
+    use_jsonbin = bool(os.environ.get("JSONBIN_KEY"))
     run_btn = (
-        '<a href="/" class="btn-run" style="text-decoration:none">&#8635; Refresh Data</a>'
-        if on_railway else
+        '<form method="POST" action="/run" style="margin:0"><button type="submit" class="btn-run">&#9728; Refresh from Cloud</button></form>'
+        if use_jsonbin else
         '<form method="POST" action="/run" style="margin:0"><button type="submit" class="btn-run">&#9654; Run Pipeline</button></form>'
     )
     source_badge = (
@@ -590,9 +591,22 @@ def view_email(filename):
 
 @app.route("/run", methods=["POST"])
 def run_pipeline():
-    # On Railway, Reddit is blocked — pipeline must run on the local machine.
-    if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_PROJECT_ID"):
+    if os.environ.get("JSONBIN_KEY"):
+        # Pull fresh data from JSONbin and save to local files
+        try:
+            from scoute.storage import pull_from_jsonbin
+            scout_data = pull_from_jsonbin("scout_results")
+            arb_data = pull_from_jsonbin("arbitrage_results")
+            if scout_data is not None:
+                SCOUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+                SCOUT_PATH.write_text(json.dumps(scout_data, indent=2), encoding="utf-8")
+            if arb_data is not None:
+                ARB_PATH.parent.mkdir(parents=True, exist_ok=True)
+                ARB_PATH.write_text(json.dumps(arb_data, indent=2), encoding="utf-8")
+        except Exception:
+            pass
         return redirect("/")
+    # Local dev: run the full pipeline in a background thread
     def _run():
         try: subprocess.run(["python","main.py"], cwd=Path(__file__).parent, timeout=300)
         except: pass

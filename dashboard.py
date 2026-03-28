@@ -122,6 +122,51 @@ nav{display:flex;align-items:center;gap:2rem;padding:1rem 2rem;background:rgba(8
 .btn-reset{background:transparent;border:1px solid rgba(255,255,255,0.1);color:#64748b;padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all 0.2s}
 .btn-reset:hover{border-color:rgba(168,85,247,0.4);color:#a855f7}
 @media(max-width:768px){.filter-grid{grid-template-columns:1fr}.fan-range{flex-direction:column;align-items:stretch}.fan-sep{display:none}}
+/* Mode toggle */
+.mode-bar{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap}
+.mode-pill{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#64748b;padding:7px 18px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all 0.2s}
+.mode-pill:hover{border-color:rgba(168,85,247,0.35);color:#a855f7}
+.mode-pill.active{background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.5);color:#a855f7}
+.view-panel{transition:opacity 0.2s ease}
+.view-panel.fading{opacity:0}
+/* Stars */
+.stars-filled{color:#eab308;letter-spacing:1px;font-size:15px}
+.stars-empty{color:#1e293b;letter-spacing:1px;font-size:15px}
+/* Region tags */
+.region-tags{display:flex;gap:4px;flex-wrap:wrap}
+.region-tag{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600;letter-spacing:0.5px}
+.region-present{background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.2)}
+.region-missing{background:rgba(239,68,68,0.08);color:#f87171;border:1px solid rgba(239,68,68,0.15)}
+/* Pitch button */
+.btn-pitch{background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.25);color:#a855f7;padding:5px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all 0.2s;white-space:nowrap}
+.btn-pitch:hover{background:rgba(168,85,247,0.22);box-shadow:0 0 12px rgba(168,85,247,0.25)}
+/* Curator grouped view */
+.curator-group{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;overflow:hidden;margin-bottom:1rem}
+.curator-group-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
+.curator-group-count{font-size:12px;color:#475569}
+.curator-artist-row{display:flex;align-items:center;gap:1rem;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s}
+.curator-artist-row:last-child{border-bottom:none}
+.curator-artist-row:hover{background:rgba(168,85,247,0.05)}
+.curator-artist-name{flex:1;font-weight:600;color:#e2e8f0;font-size:14px}
+.curator-artist-meta{display:flex;align-items:center;gap:10px}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal-card{background:#0d0d1e;border:1px solid rgba(168,85,247,0.3);border-radius:20px;width:100%;max-width:460px;overflow:hidden;box-shadow:0 0 60px rgba(168,85,247,0.18)}
+.modal-header{display:flex;align-items:flex-start;justify-content:space-between;padding:1.5rem;border-bottom:1px solid rgba(255,255,255,0.07)}
+.modal-title{font-size:16px;font-weight:700;color:#e2e8f0}
+.modal-sub{font-size:13px;color:#64748b;margin-top:3px}
+.modal-close{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;font-family:sans-serif}
+.modal-close:hover{background:rgba(255,255,255,0.12);color:#e2e8f0}
+.curator-match{display:flex;align-items:center;gap:12px;padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.05)}
+.curator-match:last-child{border-bottom:none}
+.match-info{flex:1;min-width:0}
+.match-name{font-size:14px;font-weight:600;color:#e2e8f0}
+.match-curator{font-size:12px;color:#64748b;margin-top:2px}
+.match-followers{font-size:12px;color:#a855f7;font-weight:600;white-space:nowrap}
+.btn-generate{background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;border:none;padding:6px 12px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all 0.2s;white-space:nowrap;margin-left:6px}
+.btn-generate:disabled{opacity:0.35;cursor:not-allowed}
+.btn-generate:not(:disabled):hover{transform:scale(1.04);box-shadow:0 0 12px rgba(168,85,247,0.4)}
+.modal-no-match{padding:2rem 1.5rem;text-align:center;color:#475569;font-size:14px}
 </style>
 </head>
 <body>
@@ -201,6 +246,114 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(fmin)fmin.addEventListener('input',applyFilters);
   if(fmax)fmax.addEventListener('input',applyFilters);
 });
+// ── Mode toggle ────────────────────────────────────────────────────────────
+const CURATORS=[
+  {name:"Street Signals",curator:"Marcus Webb",followers:87000,genres:["hip hop","rap","underground hip hop"]},
+  {name:"Drill Season",curator:"Darius Okafor",followers:54000,genres:["uk drill","chicago drill","trap"]},
+  {name:"Block Report",curator:"Aaliya Thompson",followers:31000,genres:["hip hop","rap","conscious rap","jazz rap"]},
+  {name:"Unsigned & Unfiltered",curator:"Jerome 'JB' Baptiste",followers:19500,genres:["hip hop","rap","bedroom rap","lo-fi hip hop"]},
+  {name:"Silk & Static",curator:"Renee Holloway",followers:62000,genres:["r&b","neo soul","alternative r&b"]},
+  {name:"Late Night Feels",curator:"Tobias Mensah",followers:44500,genres:["r&b","soul","quiet storm","slow jams"]},
+  {name:"Church Clothes",curator:"Simone Adeyemi",followers:27000,genres:["soul","gospel soul","r&b","neo soul"]},
+  {name:"The Indie Pulse",curator:"Jamie Rivera",followers:42000,genres:["indie pop","bedroom pop","lo-fi"]},
+  {name:"Four Walls",curator:"Elspeth Crane",followers:23000,genres:["bedroom pop","dream pop","shoegaze","indie folk"]},
+  {name:"Static Bloom",curator:"Noah Fitzpatrick",followers:16000,genres:["indie rock","emo","indie pop","post-punk"]},
+  {name:"Warehouse Frequency",curator:"Lena Kovacs",followers:71000,genres:["techno","house","electronic","dance"]},
+  {name:"Dissolve",curator:"Finn Albrecht",followers:38000,genres:["ambient","electronic","downtempo","future beats"]},
+  {name:"Peak Hour",curator:"Camille Dubois",followers:29000,genres:["afro house","afrobeats","latin house","dance"]},
+  {name:"Seoul to the World",curator:"Hana Yoshida",followers:58000,genres:["k-pop","k-indie","k-r&b"]},
+  {name:"Shibuya Crossing",curator:"Kenji Mori",followers:21000,genres:["j-pop","city pop","j-rock","japanese indie"]},
+  {name:"Crate Therapy",curator:"Winston Osei",followers:34000,genres:["funk","soul","classic soul","rare groove"]},
+  {name:"Mothership Groove",curator:"Diana Ferreira",followers:17500,genres:["funk","afrobeat","soul","jazz funk"]},
+  {name:"Breakdown Theory",curator:"Sam Kowalski",followers:46000,genres:["metalcore","post-hardcore","hardcore"]},
+  {name:"Fast & Loud",curator:"Bex Harrington",followers:22000,genres:["pop punk","punk","emo","poppunkers"]},
+  {name:"Global Sounds Weekly",curator:"Priya Nair",followers:18500,genres:["world music","afrobeats","latin","global","discovery"]},
+];
+const SUB_GENRES={
+  hiphopheads:["hip hop","rap"],indieheads:["indie pop","indie rock"],
+  listentothis:["indie","bedroom pop","lo-fi"],rnb:["r&b","soul","neo soul"],
+  electronicmusic:["electronic","house","techno","dance"],
+  undergroundhiphop:["hip hop","underground hip hop","rap"],
+  chicagorap:["hip hop","rap","trap"],ukdrill:["uk drill","trap"],
+  afrobeats:["afrobeats","afro house"],latin:["latin","latin house"],
+  kpop:["k-pop","k-indie","k-r&b"],jmusic:["j-pop","city pop","j-rock","japanese indie"],
+  bedroom_pop:["bedroom pop","indie pop","lo-fi","dream pop"],
+  poppunkers:["pop punk","punk","emo"],emo:["emo","post-hardcore","indie rock"],
+  metalcore:["metalcore","post-hardcore","hardcore"],DJs:["electronic","house","techno","dance"],
+  funk:["funk","soul","jazz funk"],soul:["soul","r&b","gospel soul"],
+  jazz:["jazz","jazz rap","jazz funk"],futurebeats:["future beats","electronic","downtempo","ambient"],
+};
+let _curMode='manager';
+function setMode(mode,btn){
+  if(mode===_curMode)return;
+  const panels=[document.getElementById('view-table'),document.getElementById('view-curator')].filter(Boolean);
+  panels.forEach(p=>p.classList.add('fading'));
+  setTimeout(()=>{
+    _curMode=mode;
+    document.querySelectorAll('.mode-pill').forEach(p=>p.classList.remove('active'));
+    if(btn)btn.classList.add('active');
+    // Column visibility
+    ['col-potential','col-pitch','col-market'].forEach(cls=>{
+      const show=(cls==='col-potential'&&mode==='manager')||(cls==='col-pitch'&&mode==='indie')||(cls==='col-market'&&mode==='label');
+      document.querySelectorAll('.'+cls).forEach(el=>el.style.display=show?'':'none');
+    });
+    // Panel visibility
+    const vt=document.getElementById('view-table');
+    const vc=document.getElementById('view-curator');
+    if(vt)vt.style.display=mode==='curator'?'none':'';
+    if(vc){vc.style.display=mode==='curator'?'':'none';if(mode==='curator')buildCuratorView();}
+    panels.forEach(p=>p.classList.remove('fading'));
+  },200);
+}
+function buildCuratorView(){
+  const vc=document.getElementById('view-curator');
+  if(!vc)return;
+  const rows=[...document.querySelectorAll('.arb-row')];
+  const groups={};
+  rows.forEach(r=>{
+    const s=r.dataset.sub||'Unknown';
+    if(!groups[s])groups[s]=[];
+    groups[s].push({name:r.dataset.artist,score:parseFloat(r.dataset.score),fans:parseInt(r.dataset.fans)});
+  });
+  if(!Object.keys(groups).length){vc.innerHTML='<div class="empty"><span class="empty-icon">&#127926;</span>No data.</div>';return;}
+  let html='';
+  Object.entries(groups).sort().forEach(([sub,artists])=>{
+    html+=`<div class="curator-group"><div class="curator-group-header"><span class="sub-pill">${sub}</span><span class="curator-group-count">${artists.length} artist${artists.length!==1?'s':''}</span></div>`;
+    artists.forEach(a=>{
+      const sc=a.score>=1?'score-high':a.score>=0.5?'score-mid':'score-low';
+      html+=`<div class="curator-artist-row"><span class="curator-artist-name">${a.name}</span><span class="curator-artist-meta"><span class="score-val ${sc}">${a.score.toFixed(2)}</span><span class="meta-val">${a.fans.toLocaleString()} fans</span></span></div>`;
+    });
+    html+='</div>';
+  });
+  vc.innerHTML=html;
+}
+// ── Pitch modal ─────────────────────────────────────────────────────────────
+function openPitchModal(btn){
+  const row=btn.closest('.arb-row');
+  const artistName=row.dataset.artist;
+  const subreddit=row.dataset.sub;
+  document.getElementById('modal-artist-name').textContent=artistName+' \u2014 '+subreddit;
+  const artistGenres=(SUB_GENRES[subreddit]||[]);
+  const matches=CURATORS.map(c=>({
+    ...c,
+    score:c.genres.filter(g=>artistGenres.some(ag=>g.includes(ag)||ag.includes(g))).length
+  })).filter(c=>c.score>0).sort((a,b)=>b.score-a.score||b.followers-a.followers).slice(0,3);
+  const html=matches.length?matches.map((c,i)=>`
+    <div class="curator-match">
+      <div style="width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;${i===0?'background:rgba(234,179,8,0.12);color:#eab308;border:1px solid rgba(234,179,8,0.3)':i===1?'background:rgba(148,163,184,0.12);color:#94a3b8;border:1px solid rgba(148,163,184,0.3)':'background:rgba(180,120,60,0.12);color:#cd8a4a;border:1px solid rgba(180,120,60,0.3)'}">${i+1}</div>
+      <div class="match-info"><div class="match-name">${c.name}</div><div class="match-curator">${c.curator}</div></div>
+      <span class="match-followers">${c.followers.toLocaleString()}</span>
+      <button class="btn-generate" disabled title="Add Anthropic credits to enable">Generate</button>
+    </div>`).join(''):'<div class="modal-no-match">No genre matches found for this subreddit.</div>';
+  document.getElementById('modal-matches').innerHTML=html;
+  document.getElementById('pitch-modal').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closePitchModal(){
+  document.getElementById('pitch-modal').style.display='none';
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePitchModal();});
 window.addEventListener('load',()=>{
   const c1=document.getElementById('c1');
   const c2=document.getElementById('c2');
@@ -224,6 +377,25 @@ def load_json(path):
 
 def yt_url(name): return f"https://music.youtube.com/search?q={name.replace(' ','+')}"
 def sp_url(name): return f"https://open.spotify.com/search/{name.replace(' ','%20')}"
+
+def star_html(score):
+    n = 5 if score > 1.0 else 4 if score > 0.7 else 3 if score > 0.5 else 2 if score > 0.3 else 1
+    return f'<span class="stars-filled">{"&#9733;"*n}</span><span class="stars-empty">{"&#9733;"*(5-n)}</span>'
+
+_REGION_SUBS = {
+    'US': {'hiphopheads','indieheads','listentothis','rnb','undergroundhiphop',
+           'chicagorap','bedroom_pop','poppunkers','emo','metalcore','funk','soul','jazz','futurebeats','latin'},
+    'UK': {'ukdrill'},
+    'EU': {'electronicmusic','DJs'},
+    'Asia': {'kpop','jmusic','afrobeats'},
+}
+
+def market_tags_html(subreddit):
+    present = {r for r, subs in _REGION_SUBS.items() if subreddit in subs}
+    return ''.join(
+        f'<span class="region-tag {"region-present" if r in present else "region-missing"}">{r}</span>'
+        for r in ['US','UK','EU','Asia']
+    )
 
 @app.route("/")
 def home():
@@ -261,6 +433,9 @@ def home():
 <td><span class="meta-val">{fans:,}</span></td>
 <td><span class="meta-val">{reddit:,}</span></td>
 <td><a href="{yt_url(name)}" target="_blank" class="link-btn link-yt">▶ YouTube</a><a href="{sp_url(name)}" target="_blank" class="link-btn link-sp">Spotify</a></td>
+<td class="col-potential">{star_html(score)}</td>
+<td class="col-pitch" style="display:none"><button class="btn-pitch" onclick="openPitchModal(this)">Pitch Me</button></td>
+<td class="col-market" style="display:none"><div class="region-tags">{market_tags_html(sub)}</div></td>
 </tr>"""
 
     subs = sorted({a.get('subreddit','') for a in arb if a.get('subreddit','')})
@@ -299,17 +474,36 @@ def home():
 </div>
 </div>""" if arb else ""
 
-    table = f'{filter_card}<div class="table-wrap"><table class="arb-table"><thead><tr><th>#</th><th>Artist</th><th>Subreddit</th><th>Arb Score</th><th>Deezer Fans</th><th>Reddit Score</th><th>Listen</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="empty"><span class="empty-icon">🎵</span>No data yet — run the pipeline.</div>'
+    table = f'{filter_card}<div class="table-wrap"><table class="arb-table"><thead><tr><th>#</th><th>Artist</th><th>Subreddit</th><th>Arb Score</th><th>Deezer Fans</th><th>Reddit Score</th><th>Listen</th><th class="col-potential">Potential</th><th class="col-pitch" style="display:none">Pitch</th><th class="col-market" style="display:none">Market Gap</th></tr></thead><tbody>{rows}</tbody></table></div>' if rows else '<div class="empty"><span class="empty-icon">🎵</span>No data yet — run the pipeline.</div>'
+
+    modal = """<div id="pitch-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closePitchModal()">
+<div class="modal-card">
+<div class="modal-header">
+  <div><div class="modal-title">Top Curator Matches</div><div class="modal-sub" id="modal-artist-name"></div></div>
+  <button class="modal-close" onclick="closePitchModal()">&#215;</button>
+</div>
+<div id="modal-matches"></div>
+</div>
+</div>"""
 
     body = f"""<div class="hero">
-<div class="hero-eye">◆ AI Music Intelligence Platform</div>
+<div class="hero-eye">&#9670; AI Music Intelligence Platform</div>
 <h1 class="hero-title">Discover Artists<br><span class="gradient-text">Before They Blow Up</span></h1>
 <p class="hero-sub">Real-time Reddit signals. Zero guesswork. Pure arbitrage.</p>
 {stats}</div>
 <div class="section">
 <div class="section-header"><div class="section-title">Arbitrage Opportunities</div>
-<form method="POST" action="/run" style="margin:0"><button type="submit" class="btn-run">▶ Run Pipeline</button></form></div>
-{table}</div>"""
+<form method="POST" action="/run" style="margin:0"><button type="submit" class="btn-run">&#9654; Run Pipeline</button></form></div>
+<div class="mode-bar">
+  <button class="mode-pill active" onclick="setMode('manager',this)">Manager</button>
+  <button class="mode-pill" onclick="setMode('indie',this)">Indie Artist</button>
+  <button class="mode-pill" onclick="setMode('curator',this)">Curator</button>
+  <button class="mode-pill" onclick="setMode('label',this)">Label</button>
+</div>
+<div id="view-table" class="view-panel">{table}</div>
+<div id="view-curator" class="view-panel" style="display:none"></div>
+</div>
+{modal}"""
     return render_template_string(HTML, page_title="Home", active="home", body=body)
 
 @app.route("/scout")

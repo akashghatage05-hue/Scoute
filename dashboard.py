@@ -458,13 +458,12 @@ def market_tags_html(subreddit):
 def home():
     arb = load_data(ARB_PATH, "arbitrage_results")
     scout = load_data(SCOUT_PATH, "scout_results")
-    emails = list(EMAILS_DIR.glob("*.md")) if EMAILS_DIR.exists() else []
     top_score = arb[0]['arbitrage_score'] if arb else 0
 
     stats = f"""<div class="stats">
 <div class="stat-card"><div class="stat-num" id="c1" data-val="{len(scout)}">0</div><div class="stat-label">Trending Tracks</div></div>
 <div class="stat-card"><div class="stat-num" id="c2" data-val="{len(arb)}">0</div><div class="stat-label">Artists Ranked</div></div>
-<div class="stat-card"><div class="stat-num" id="c3" data-val="{len(emails)}">0</div><div class="stat-label">Emails Generated</div></div>
+<div class="stat-card"><div class="stat-num" id="c3" data-val="20">0</div><div class="stat-label">Playlist Curators</div></div>
 <div class="stat-card"><div class="stat-num" id="c4" data-val="{top_score:.2f}">0</div><div class="stat-label">Top Breakout Score</div></div>
 </div>"""
 

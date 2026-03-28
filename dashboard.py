@@ -169,6 +169,31 @@ nav{display:flex;align-items:center;gap:2rem;padding:1rem 2rem;background:rgba(8
 .btn-generate:disabled{opacity:0.35;cursor:not-allowed}
 .btn-generate:not(:disabled):hover{transform:scale(1.04);box-shadow:0 0 12px rgba(168,85,247,0.4)}
 .modal-no-match{padding:2rem 1.5rem;text-align:center;color:#475569;font-size:14px}
+/* Waitlist */
+.waitlist-wrap{max-width:540px;margin:3rem auto;padding:0 2rem}
+.waitlist-card{background:rgba(255,255,255,0.03);border:1px solid rgba(168,85,247,0.25);border-radius:20px;padding:2.5rem;text-align:center}
+.waitlist-icon{font-size:36px;margin-bottom:1rem}
+.waitlist-title{font-size:26px;font-weight:700;color:#e2e8f0;margin-bottom:0.75rem}
+.waitlist-sub{color:#64748b;font-size:15px;line-height:1.6;margin-bottom:2rem}
+.waitlist-form{display:flex;flex-direction:column;gap:12px;text-align:left}
+.waitlist-input{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:#e2e8f0;padding:11px 14px;font-size:14px;font-family:'Space Grotesk',sans-serif;outline:none;transition:border-color 0.2s;width:100%}
+.waitlist-input:focus{border-color:rgba(168,85,247,0.5)}
+.waitlist-submit{background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;border:none;padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all 0.2s;margin-top:4px}
+.waitlist-submit:hover{transform:scale(1.02);box-shadow:0 0 24px rgba(168,85,247,0.4)}
+.waitlist-success{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:12px;padding:1rem 1.25rem;color:#22c55e;font-size:14px;font-weight:500;margin-top:1rem;display:none}
+/* Waitlist modal inside pitch modal */
+.waitlist-mini{padding:1.25rem 1.5rem;border-top:1px solid rgba(255,255,255,0.06)}
+.waitlist-mini-title{font-size:13px;font-weight:600;color:#a855f7;margin-bottom:10px}
+.waitlist-mini-row{display:flex;gap:8px}
+.waitlist-mini-input{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;padding:8px 11px;font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none}
+.waitlist-mini-input:focus{border-color:rgba(168,85,247,0.4)}
+.waitlist-mini-btn{background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif;white-space:nowrap}
+.waitlist-mini-success{font-size:12px;color:#22c55e;margin-top:8px;display:none}
+/* Admin waitlist table */
+.admin-table{width:100%;border-collapse:collapse;font-size:14px}
+.admin-table th{text-align:left;padding:10px 14px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#475569;border-bottom:1px solid rgba(255,255,255,0.08)}
+.admin-table td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.04);color:#cbd5e1}
+.admin-table tr:last-child td{border-bottom:none}
 </style>
 </head>
 <body>
@@ -335,6 +360,10 @@ function openPitchModal(btn){
   const artistName=row.dataset.artist;
   const subreddit=row.dataset.sub;
   document.getElementById('modal-artist-name').textContent=artistName+' \u2014 '+subreddit;
+  document.getElementById('modal-waitlist-artist').value=artistName;
+  document.getElementById('modal-waitlist-success').style.display='none';
+  document.getElementById('modal-waitlist-name').value='';
+  document.getElementById('modal-waitlist-email').value='';
   const artistGenres=(SUB_GENRES[subreddit]||[]);
   const matches=CURATORS.map(c=>({
     ...c,
@@ -345,7 +374,6 @@ function openPitchModal(btn){
       <div style="width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;${i===0?'background:rgba(234,179,8,0.12);color:#eab308;border:1px solid rgba(234,179,8,0.3)':i===1?'background:rgba(148,163,184,0.12);color:#94a3b8;border:1px solid rgba(148,163,184,0.3)':'background:rgba(180,120,60,0.12);color:#cd8a4a;border:1px solid rgba(180,120,60,0.3)'}">${i+1}</div>
       <div class="match-info"><div class="match-name">${c.name}</div><div class="match-curator">${c.curator}</div></div>
       <span class="match-followers">${c.followers.toLocaleString()}</span>
-      <button class="btn-generate" onclick="alert('Ghostwriter requires Anthropic API credits. Add credits at console.anthropic.com to enable email generation.')">Generate</button>
     </div>`).join(''):'<div class="modal-no-match">No genre matches found for this subreddit.</div>';
   document.getElementById('modal-matches').innerHTML=html;
   document.getElementById('pitch-modal').style.display='flex';
@@ -354,6 +382,16 @@ function openPitchModal(btn){
 function closePitchModal(){
   document.getElementById('pitch-modal').style.display='none';
   document.body.style.overflow='';
+}
+async function submitWaitlistMini(){
+  const name=document.getElementById('modal-waitlist-name').value.trim();
+  const email=document.getElementById('modal-waitlist-email').value.trim();
+  const artist=document.getElementById('modal-waitlist-artist').value;
+  if(!name||!email)return;
+  await fetch('/waitlist/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,source:'pitch_modal',artist})});
+  document.getElementById('modal-waitlist-success').style.display='block';
+  document.getElementById('modal-waitlist-name').value='';
+  document.getElementById('modal-waitlist-email').value='';
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePitchModal();});
 window.addEventListener('load',()=>{
@@ -500,6 +538,16 @@ def home():
   <button class="modal-close" onclick="closePitchModal()">&#215;</button>
 </div>
 <div id="modal-matches"></div>
+<div class="waitlist-mini">
+  <div class="waitlist-mini-title">&#9993; Join Waitlist — Get AI pitch emails when they launch</div>
+  <input type="hidden" id="modal-waitlist-artist" value="">
+  <div class="waitlist-mini-row">
+    <input class="waitlist-mini-input" id="modal-waitlist-name" type="text" placeholder="Your name">
+    <input class="waitlist-mini-input" id="modal-waitlist-email" type="email" placeholder="Email address">
+    <button class="waitlist-mini-btn" onclick="submitWaitlistMini()">Join</button>
+  </div>
+  <div class="waitlist-mini-success" id="modal-waitlist-success">&#10003; You're on the list! We'll be in touch soon.</div>
+</div>
 </div>
 </div>"""
 
@@ -556,85 +604,87 @@ def scout():
 
 @app.route("/emails")
 def emails():
-    cards = ""
-    email_records = []
+    signup_success = request.args.get("joined") == "1"
+    success_msg = '<div class="waitlist-success" style="display:block">&#10003; You\'re on the list! We\'ll be in touch soon.</div>' if signup_success else ''
+    body = f"""<div class="waitlist-wrap">
+<div class="waitlist-card">
+<div class="waitlist-icon">&#9993;</div>
+<h1 class="waitlist-title">AI Pitch Emails — Coming Soon</h1>
+<p class="waitlist-sub">AI-powered pitch emails are coming soon. Join the waitlist to get early access and <strong style="color:#a855f7">3 months free</strong>.</p>
+<form class="waitlist-form" method="POST" action="/waitlist/signup-form">
+  <input class="waitlist-input" type="text" name="name" placeholder="Your name" required>
+  <input class="waitlist-input" type="email" name="email" placeholder="Email address" required>
+  <button type="submit" class="waitlist-submit">Join the Waitlist &#8594;</button>
+</form>
+{success_msg}
+</div>
+</div>"""
+    return render_template_string(HTML, page_title="Emails — Coming Soon", active="emails", body=body)
 
-    # Try JSONbin first when key is set
-    if os.environ.get("JSONBIN_KEY"):
-        try:
-            from scoute.storage import pull_from_jsonbin
-            data = pull_from_jsonbin("emails_list")
-            if data:
-                email_records = data
-        except Exception:
-            pass
+def _save_signup(name: str, email: str, source: str = "emails_page", artist: str = "") -> bool:
+    """Append a waitlist signup to JSONbin."""
+    try:
+        from scoute.storage import pull_from_jsonbin, push_to_jsonbin
+        existing = pull_from_jsonbin("waitlist") or []
+        existing.append({
+            "name": name,
+            "email": email,
+            "source": source,
+            "artist": artist,
+            "timestamp": __import__("datetime").datetime.utcnow().isoformat(),
+        })
+        push_to_jsonbin(existing, "waitlist")
+        return True
+    except Exception:
+        return False
 
-    if email_records:
-        for e in email_records:
-            name = e.get("filename",""); artist = e.get("artist",""); curator = e.get("curator",""); date_fmt = e.get("date",""); size_kb = max(1, len(e.get("content","")) // 1024)
-            dp = f'<span class="pill pill-c">{date_fmt}</span>' if date_fmt else ""
-            cards += f"""<a href="/emails/{name}" class="email-card">
-<div class="email-icon">✉</div>
-<div class="email-title">{artist}</div>
-<div class="email-sub">{"Curator: "+curator if curator else ""}</div>
-<div class="email-foot">{dp}<span class="pill">{size_kb} KB</span></div></a>"""
-        count = len(email_records)
-    else:
-        files = sorted(EMAILS_DIR.glob("*.md"), reverse=True) if EMAILS_DIR.exists() else []
-        for f in files:
-            parts=f.stem.split("_"); artist=parts[0].replace("-"," ").title() if parts else f.stem
-            curator=parts[1].replace("-"," ").title() if len(parts)>1 else ""; raw_date=parts[2] if len(parts)>2 else ""
-            date_fmt=f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:]}" if len(raw_date)==8 else raw_date
-            dp=f'<span class="pill pill-c">{date_fmt}</span>' if date_fmt else ""
-            cards += f"""<a href="/emails/{f.name}" class="email-card">
-<div class="email-icon">✉</div>
-<div class="email-title">{artist}</div>
-<div class="email-sub">{"Curator: "+curator if curator else ""}</div>
-<div class="email-foot">{dp}<span class="pill">{max(1,f.stat().st_size//1024)} KB</span></div></a>"""
-        count = len(files)
+@app.route("/waitlist/signup", methods=["POST"])
+def waitlist_signup_json():
+    """JSON endpoint used by the Pitch Me modal."""
+    data = request.get_json(silent=True) or {}
+    name = data.get("name","").strip()
+    email = data.get("email","").strip()
+    if name and email:
+        _save_signup(name, email, source=data.get("source","modal"), artist=data.get("artist",""))
+    return {"ok": True}
 
-    if not cards: cards = '<div class="empty"><span class="empty-icon">📭</span>No emails yet. Run the Ghostwriter.</div>'
-    body = f"""<div class="page-head"><div><h1>Generated Pitch Emails</h1><p>{count} emails ready</p></div><a href="/" class="btn-back">← Home</a></div>
-<div class="section"><div class="email-grid">{cards}</div></div>"""
-    return render_template_string(HTML, page_title="Emails", active="emails", body=body)
+@app.route("/waitlist/signup-form", methods=["POST"])
+def waitlist_signup_form():
+    """Form POST endpoint used by the emails Coming Soon page."""
+    name = request.form.get("name","").strip()
+    email = request.form.get("email","").strip()
+    if name and email:
+        _save_signup(name, email, source="emails_page")
+    return redirect("/emails?joined=1")
 
-@app.route("/emails/<filename>")
-def view_email(filename):
-    # Try JSONbin first
-    if os.environ.get("JSONBIN_KEY"):
-        try:
-            from scoute.storage import pull_from_jsonbin
-            data = pull_from_jsonbin("emails_list")
-            if data:
-                match = next((e for e in data if e.get("filename") == filename), None)
-                if match:
-                    raw = match["content"]
-                    html = re.sub(r'^# (.+)$', r'<h1>\1</h1>', raw, flags=re.MULTILINE)
-                    html = re.sub(r'^## (.+)$', r'<h2 style="color:#a855f7;margin:1rem 0 0.5rem">\1</h2>', html, flags=re.MULTILINE)
-                    html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
-                    html = re.sub(r'^---$', r'<hr>', html, flags=re.MULTILINE)
-                    html = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2" target="_blank">\1</a>', html)
-                    html = html.replace("\n","<br>")
-                    title = Path(filename).stem.replace("-"," ").replace("_"," — ",1).title()
-                    body = f"""<div class="page-head"><div><h1>{title}</h1><p>{filename}</p></div><a href="/emails" class="btn-back">← All Emails</a></div>
-<div class="reader-wrap"><div class="reader-card">{html}</div></div>"""
-                    return render_template_string(HTML, page_title=title, active="emails", body=body)
-        except Exception:
-            pass
-
-    fp = EMAILS_DIR / Path(filename).name
-    if not fp.exists(): return redirect("/emails")
-    raw = fp.read_text(encoding="utf-8")
-    html = re.sub(r'^# (.+)$', r'<h1>\1</h1>', raw, flags=re.MULTILINE)
-    html = re.sub(r'^## (.+)$', r'<h2 style="color:#a855f7;margin:1rem 0 0.5rem">\1</h2>', html, flags=re.MULTILINE)
-    html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
-    html = re.sub(r'^---$', r'<hr>', html, flags=re.MULTILINE)
-    html = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2" target="_blank">\1</a>', html)
-    html = html.replace("\n","<br>")
-    title = fp.stem.replace("-"," ").replace("_"," — ",1).title()
-    body = f"""<div class="page-head"><div><h1>{title}</h1><p>{fp.name}</p></div><a href="/emails" class="btn-back">← All Emails</a></div>
-<div class="reader-wrap"><div class="reader-card">{html}</div></div>"""
-    return render_template_string(HTML, page_title=title, active="emails", body=body)
+@app.route("/waitlist")
+def waitlist_admin():
+    """Admin view of all waitlist signups — password protected."""
+    pwd = request.args.get("password","")
+    admin_pwd = os.environ.get("ADMIN_PASSWORD","")
+    if not admin_pwd or pwd != admin_pwd:
+        return """<html><body style="background:#080812;color:#e2e8f0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+<form method="GET" style="background:rgba(255,255,255,0.04);border:1px solid rgba(168,85,247,0.25);border-radius:16px;padding:2rem;display:flex;flex-direction:column;gap:12px;min-width:280px">
+<div style="font-size:18px;font-weight:700;margin-bottom:4px">Waitlist Admin</div>
+<input name="password" type="password" placeholder="Admin password" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e2e8f0;padding:10px 12px;font-size:14px;outline:none">
+<button type="submit" style="background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;border:none;padding:10px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">View Signups</button>
+</form></body></html>"""
+    try:
+        from scoute.storage import pull_from_jsonbin
+        signups = pull_from_jsonbin("waitlist") or []
+    except Exception:
+        signups = []
+    rows = "".join(
+        f'<tr><td>{i+1}</td><td>{s.get("name","")}</td><td>{s.get("email","")}</td><td>{s.get("source","")}</td><td>{s.get("artist","")}</td><td>{s.get("timestamp","")}</td></tr>'
+        for i, s in enumerate(signups)
+    )
+    return f"""<html><body style="background:#080812;color:#e2e8f0;font-family:'Space Grotesk',sans-serif;padding:2rem">
+<h1 style="margin-bottom:1.5rem;font-size:22px">Waitlist Signups <span style="font-size:14px;color:#a855f7;font-weight:400">({len(signups)} total)</span></h1>
+<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;overflow:hidden">
+<table class="admin-table" style="width:100%;border-collapse:collapse;font-size:14px">
+<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)"><th style="padding:12px 16px;text-align:left;color:#475569;font-size:11px;letter-spacing:1.5px;text-transform:uppercase">#</th><th style="padding:12px 16px;text-align:left;color:#475569;font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Name</th><th style="padding:12px 16px;text-align:left;color:#475569;font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Email</th><th style="padding:12px 16px;text-align:left;color:#475569;font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Source</th><th style="padding:12px 16px;text-align:left;color:#475569;font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Artist</th><th style="padding:12px 16px;text-align:left;color:#475569;font-size:11px;letter-spacing:1.5px;text-transform:uppercase">Time</th></tr></thead>
+<tbody style="color:#cbd5e1">{rows if rows else '<tr><td colspan="6" style="padding:2rem;text-align:center;color:#475569">No signups yet.</td></tr>'}</tbody>
+</table></div></body></html>"""
 
 @app.route("/run", methods=["POST"])
 def run_pipeline():

@@ -29,10 +29,12 @@ from scoute.agents import scout, arbitrage, ghostwriter
 
 load_dotenv()
 
+import io
+_stdout_utf8 = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
+    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    handlers=[logging.StreamHandler(_stdout_utf8)],
 )
 logger = logging.getLogger("scoute.main")
 

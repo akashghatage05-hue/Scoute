@@ -1,6 +1,8 @@
-from flask import Flask, render_template_string, redirect
+from flask import Flask, render_template_string, redirect, request
 from pathlib import Path
 import json, os, re, subprocess, threading
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -375,6 +377,29 @@ def load_json(path):
     except:
         return []
 
+def load_data(path: Path, bin_id_env: str) -> list:
+    """
+    Read from JSONbin.io when configured, fall back to local file.
+    This lets the Railway dashboard read data uploaded by the local pipeline.
+    """
+    bin_id = os.environ.get(bin_id_env, "")
+    master_key = os.environ.get("JSONBIN_MASTER_KEY", "")
+    if bin_id and master_key:
+        try:
+            import requests as req
+            resp = req.get(
+                f"https://api.jsonbin.io/v3/b/{bin_id}/latest",
+                headers={"X-Master-Key": master_key, "X-Bin-Meta": "false"},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            data = resp.json().get("record")
+            if data is not None:
+                return data
+        except Exception:
+            pass  # fall through to local file
+    return load_json(path)
+
 def yt_url(name): return f"https://music.youtube.com/search?q={name.replace(' ','+')}"
 def sp_url(name): return f"https://open.spotify.com/search/{name.replace(' ','%20')}"
 
@@ -399,8 +424,8 @@ def market_tags_html(subreddit):
 
 @app.route("/")
 def home():
-    arb = load_json(ARB_PATH)
-    scout = load_json(SCOUT_PATH)
+    arb = load_data(ARB_PATH, "JSONBIN_ARB_BIN_ID")
+    scout = load_data(SCOUT_PATH, "JSONBIN_SCOUT_BIN_ID")
     emails = list(EMAILS_DIR.glob("*.md")) if EMAILS_DIR.exists() else []
     top_score = arb[0]['arbitrage_score'] if arb else 0
 
@@ -486,14 +511,25 @@ def home():
 </div>
 </div>"""
 
+    on_railway = bool(os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_PROJECT_ID"))
+    run_btn = (
+        '<a href="/" class="btn-run" style="text-decoration:none">&#8635; Refresh Data</a>'
+        if on_railway else
+        '<form method="POST" action="/run" style="margin:0"><button type="submit" class="btn-run">&#9654; Run Pipeline</button></form>'
+    )
+    source_badge = (
+        '<span style="font-size:11px;color:#22d3ee;letter-spacing:1px;margin-left:8px">&#9728; JSONbin</span>'
+        if (on_railway or os.environ.get("JSONBIN_MASTER_KEY")) else ""
+    )
+
     body = f"""<div class="hero">
 <div class="hero-eye">&#9670; AI Music Intelligence Platform</div>
 <h1 class="hero-title">Discover Artists<br><span class="gradient-text">Before They Blow Up</span></h1>
 <p class="hero-sub">Real-time Reddit signals. Zero guesswork. Pure arbitrage.</p>
 {stats}</div>
 <div class="section">
-<div class="section-header"><div class="section-title">Arbitrage Opportunities</div>
-<form method="POST" action="/run" style="margin:0"><button type="submit" class="btn-run">&#9654; Run Pipeline</button></form></div>
+<div class="section-header"><div class="section-title">Arbitrage Opportunities{source_badge}</div>
+{run_btn}</div>
 <div class="mode-bar">
   <button class="mode-pill active" onclick="setMode('manager',this)">Manager</button>
   <button class="mode-pill" onclick="setMode('indie',this)">Indie Artist</button>
@@ -562,8 +598,11 @@ def view_email(filename):
 
 @app.route("/run", methods=["POST"])
 def run_pipeline():
+    # On Railway, Reddit is blocked — pipeline must run on the local machine.
+    if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_PROJECT_ID"):
+        return redirect("/")
     def _run():
-        try: subprocess.run(["python","main.py"], cwd=Path(__file__).parent, timeout=120)
+        try: subprocess.run(["python","main.py"], cwd=Path(__file__).parent, timeout=300)
         except: pass
     threading.Thread(target=_run, daemon=True).start()
     return redirect("/")

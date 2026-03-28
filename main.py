@@ -22,6 +22,7 @@ import sys
 from dotenv import load_dotenv
 
 from scoute.agents import scout, arbitrage, ghostwriter
+from scoute import jsonbin_store
 
 # ---------------------------------------------------------------------------
 # Setup
@@ -70,7 +71,11 @@ def run_all() -> None:
     logger.info(f"Arbitrage opportunities: {len(opportunities)}")
     logger.info(f"Emails generated       : {len(email_files)}")
     for path in email_files:
-        logger.info(f"  → {path}")
+        logger.info(f"  -> {path}")
+
+    # Upload results to JSONbin so the Railway dashboard can read them
+    logger.info("--- Uploading results to JSONbin.io ---")
+    jsonbin_store.upload_results()
 
 
 def run_agent(agent_name: str) -> None:

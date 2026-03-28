@@ -91,8 +91,11 @@ TWITTER_QUERY = (
 SPOTIFY_TRACK_RE = re.compile(r"spotify\.com/track/([A-Za-z0-9]+)")
 
 
-def _twitter_client() -> tweepy.Client:
-    return tweepy.Client(bearer_token=os.environ["TWITTER_BEARER_TOKEN"])
+def _twitter_client() -> tweepy.Client | None:
+    try:
+        return tweepy.Client(bearer_token=os.environ["TWITTER_BEARER_TOKEN"])
+    except KeyError:
+        return None
 
 
 # Matches any bracketed tag at the start of a title, e.g. [FRESH], [DISCUSSION], [AMA]

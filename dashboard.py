@@ -1,6 +1,6 @@
 from flask import Flask, render_template_string, redirect
 from pathlib import Path
-import json, re, subprocess, threading
+import json, os, re, subprocess, threading
 
 app = Flask(__name__)
 
@@ -569,4 +569,5 @@ def run_pipeline():
     return redirect("/")
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

@@ -211,3 +211,7 @@ scoute/data/*
 scoute/outputs/*
 !scoute/data/.gitkeep
 !scoute/outputs/.gitkeep
+
+# Pipeline logs
+logs/*
+!logs/.gitkeep

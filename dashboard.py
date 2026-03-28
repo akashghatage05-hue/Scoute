@@ -589,20 +589,6 @@ def view_email(filename):
 <div class="reader-wrap"><div class="reader-card">{html}</div></div>"""
     return render_template_string(HTML, page_title=title, active="emails", body=body)
 
-@app.route("/debug")
-def debug():
-    import requests, os
-    key = os.environ.get("JSONBIN_KEY", "NOT_SET")
-    try:
-        r = requests.get(
-            "https://api.jsonbin.io/v3/b/69c7d0b06860e0745bfb789b/latest",
-            headers={"X-Master-Key": key},
-            timeout=10
-        )
-        return f"Status: {r.status_code} | Key length: {len(key)} | First 100 chars: {r.text[:100]}"
-    except Exception as e:
-        return f"Error: {str(e)}"
-
 @app.route("/run", methods=["POST"])
 def run_pipeline():
     if os.environ.get("JSONBIN_KEY"):

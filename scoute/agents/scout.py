@@ -62,7 +62,11 @@ SUBREDDITS = [
     "futurebeats",
 ]
 
-REDDIT_HEADERS = {"User-Agent": "scoute-bot/1.0 by akash"}
+REDDIT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "application/json",
+    "Accept-Language": "en-US,en;q=0.9",
+}
 
 # Most music subreddits use "Artist - Song Title [genre] (year)" in post titles.
 # listentothis uses "Artist -- Song Title [genre]"
@@ -204,6 +208,9 @@ def fetch_twitter_trending(limit: int = 100) -> list[dict]:
     Ranks by retweet + like count as a proxy for velocity.
     Returns a list of track dicts.
     """
+    if not os.environ.get("TWITTER_BEARER_TOKEN"):
+        logger.info("Twitter token not set — skipping Twitter.")
+        return []
     logger.info("Fetching Twitter trending tracks...")
     client = _twitter_client()
     tracks: list[dict] = []

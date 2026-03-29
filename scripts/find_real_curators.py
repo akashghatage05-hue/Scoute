@@ -34,6 +34,8 @@ GENRES = [
     "funk",
     "metalcore",
     "k-pop",
+    "bedroom pop",
+    "latin",
 ]
 
 MIN_FOLLOWERS = 10_000

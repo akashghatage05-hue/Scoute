@@ -39,285 +39,319 @@ EMAIL_OUTPUT_DIR = "scoute/outputs/emails"
 # Claude model to use for generation
 CLAUDE_MODEL = "claude-opus-4-6"
 
-# Curator database — 20 curators across 8 genres
-# In production, replace with a live scraped + enriched database.
+# Curator database — real Spotify playlists scraped 2026-03-29
+# Source: scripts/find_real_curators.py (10,000–500,000 followers, top 5 per genre)
+# submission_pref and contact must be researched manually per curator.
 SAMPLE_CURATORS = [
 
-    # ── Hip hop / rap (4) ────────────────────────────────────────────────────
+    # ── Hip hop (3) ──────────────────────────────────────────────────────────
     {
-        "name": "Street Signals",
-        "curator": "Marcus Webb",
+        "name": "Hip Hop 2000s Music - Best Hip Hop Hits of the 00s Playlist",
+        "curator": "Redlist Playlists",
         "platform": "Spotify",
-        "followers": 87000,
-        "genres": ["hip hop", "rap", "underground hip hop"],
-        "submission_pref": (
-            "Focused on lyricism over production — wants artists who have something "
-            "to say. No mumble rap. Prefers tracks with under 500k streams so the "
-            "playlist is the first real exposure."
-        ),
-        "contact": "marcus@streetsignals.co",
+        "followers": 261619,
+        "genres": ["hip hop", "rap"],
+        "submission_pref": "Curates best-of hip hop compilations. Pitch tracks with strong replay value and cultural staying power.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/0dMexqq0XIWS3QJ74z3ZhD",
     },
     {
-        "name": "Drill Season",
-        "curator": "Darius Okafor",
+        "name": "90\u2019s & 2000\u2019s Hip Hop Bangers",
+        "curator": "Johnny Thunder",
         "platform": "Spotify",
-        "followers": 54000,
-        "genres": ["uk drill", "chicago drill", "trap"],
-        "submission_pref": (
-            "Only UK and Chicago drill — no exceptions. Wants tracks released in the "
-            "last 60 days. Checks SoundCloud play velocity before adding anything."
-        ),
-        "contact": "darius@drillseason.uk",
+        "followers": 165658,
+        "genres": ["hip hop", "rap"],
+        "submission_pref": "Nostalgic hip hop. Pitch artists with a classic boom-bap or golden-era influence.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/04C2Ck8ZTVTBn54mOyaXuW",
     },
     {
-        "name": "Block Report",
-        "curator": "Aaliya Thompson",
+        "name": "Best of HipHop (2000-2026)",
+        "curator": "Quentin McCorvey Jr.",
         "platform": "Spotify",
-        "followers": 31000,
-        "genres": ["hip hop", "rap", "conscious rap", "jazz rap"],
-        "submission_pref": (
-            "Specialises in hip hop with live instrumentation or jazz influence. "
-            "Strongly prefers independent artists. Will not add major label signees."
-        ),
-        "contact": "submissions@blockreport.fm",
-    },
-    {
-        "name": "Unsigned & Unfiltered",
-        "curator": "Jerome 'JB' Baptiste",
-        "platform": "Spotify",
-        "followers": 19500,
-        "genres": ["hip hop", "rap", "bedroom rap", "lo-fi hip hop"],
-        "submission_pref": (
-            "Exclusively unsigned artists — if you have a label deal, this isn't the "
-            "playlist for you. Loves raw, unpolished recordings that feel real. "
-            "Under 5k monthly listeners preferred."
-        ),
-        "contact": "jb@unsignedunfiltered.com",
+        "followers": 72337,
+        "genres": ["hip hop", "rap"],
+        "submission_pref": "Broad hip hop spanning two decades. Pitch quality tracks regardless of sub-genre.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/62y3BHKehWnb1hlaPclDAA",
     },
 
-    # ── R&B / soul (3) ───────────────────────────────────────────────────────
+    # ── Soul (3) ─────────────────────────────────────────────────────────────
     {
-        "name": "Silk & Static",
-        "curator": "Renee Holloway",
+        "name": "2000s R&B & Hip-Hop Playlist",
+        "curator": "RSullivan",
         "platform": "Spotify",
-        "followers": 62000,
-        "genres": ["r&b", "neo soul", "alternative r&b"],
-        "submission_pref": (
-            "Looking for R&B with texture — not polished radio fodder. Appreciates "
-            "artists who blend genres. Has a soft spot for DIY production with "
-            "professional-quality vocals. No features-only submissions."
-        ),
-        "contact": "renee@silkandstatic.com",
+        "followers": 314871,
+        "genres": ["soul", "r&b", "hip hop"],
+        "submission_pref": "R&B and soul with crossover hip hop appeal. Pitch smooth, radio-ready tracks.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/7kPPwcLvMqJT9iaVG8z2bv",
     },
     {
-        "name": "Late Night Feels",
-        "curator": "Tobias Mensah",
+        "name": "Best Soul Of All Time",
+        "curator": "Fred",
         "platform": "Spotify",
-        "followers": 44500,
-        "genres": ["r&b", "soul", "quiet storm", "slow jams"],
-        "submission_pref": (
-            "Slow-tempo R&B and soul only — BPM under 90 is a strong signal. "
-            "The playlist is late-night driving music. Emotionally direct lyrics "
-            "are prioritised over technical vocal runs."
-        ),
-        "contact": "tobias@latenightfeels.fm",
+        "followers": 45109,
+        "genres": ["soul", "classic soul"],
+        "submission_pref": "Timeless soul music. Pitch artists with genuine emotional depth and soulful vocals.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/2tmhtyybSEvmwBCAATSt5V",
     },
     {
-        "name": "Church Clothes",
-        "curator": "Simone Adeyemi",
+        "name": "Soul Eater | openings & endings",
+        "curator": "AniPlaylist",
         "platform": "Spotify",
-        "followers": 27000,
-        "genres": ["soul", "gospel soul", "r&b", "neo soul"],
-        "submission_pref": (
-            "Soul music with spiritual or emotional depth. Doesn't have to be "
-            "religious but needs to feel like it means something. Simone personally "
-            "listens to every submission — expects a genuine intro in the pitch."
-        ),
-        "contact": "simone@churchclothes.co",
+        "followers": 31755,
+        "genres": ["soul", "anime"],
+        "submission_pref": "Anime soundtrack and soul crossover. Pitch cinematic or emotionally charged tracks.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/6RZCFELRNOFhrIZ1JseVKY",
     },
 
-    # ── Indie / bedroom pop (3) ──────────────────────────────────────────────
+    # ── Indie pop (3) ────────────────────────────────────────────────────────
     {
-        "name": "The Indie Pulse",
-        "curator": "Jamie Rivera",
+        "name": "POOL PARTY 2026 - SUMMER HITS",
+        "curator": "Filtr US",
         "platform": "Spotify",
-        "followers": 42000,
-        "genres": ["indie pop", "bedroom pop", "lo-fi"],
-        "submission_pref": (
-            "Only accepts tracks under 3 months old. Gravitates toward artists "
-            "who self-produce. Has a strong bias toward female and non-binary "
-            "artists — actively trying to balance the playlist."
-        ),
-        "contact": "jamie@indiepulse.fm",
+        "followers": 82217,
+        "genres": ["indie pop", "pop"],
+        "submission_pref": "Upbeat summer and pop hits. Pitch feel-good, high-energy indie pop tracks.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/4nFTwoPp8L6uato870FdW3",
     },
     {
-        "name": "Four Walls",
-        "curator": "Elspeth Crane",
+        "name": "Best indie songs of all time",
+        "curator": "Jen Affleck",
         "platform": "Spotify",
-        "followers": 23000,
-        "genres": ["bedroom pop", "dream pop", "shoegaze", "indie folk"],
-        "submission_pref": (
-            "Intimate, homemade-sounding records only. Elspeth curates for "
-            "headphone listening — nothing that sounds like it was mixed for "
-            "festival stages. Debut EPs and singles especially welcome."
-        ),
-        "contact": "elspeth@fourwalls.fm",
+        "followers": 70997,
+        "genres": ["indie pop", "indie rock", "alternative"],
+        "submission_pref": "Best-of indie curation. Pitch tracks with lasting indie appeal and strong songwriting.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/0Sm64Lu6z1OK8yM3Oeo4Wx",
     },
     {
-        "name": "Static Bloom",
-        "curator": "Noah Fitzpatrick",
+        "name": "2010's Alternative/Indie Pop",
+        "curator": "gabemendezm1",
         "platform": "Spotify",
-        "followers": 16000,
-        "genres": ["indie rock", "emo", "indie pop", "post-punk"],
-        "submission_pref": (
-            "Indie and emo with melodic hooks — not screamo, not hardcore. "
-            "Noah updates the playlist every Friday. Pitches sent Monday–Wednesday "
-            "have the best chance of making the next cycle."
-        ),
-        "contact": "noah@staticbloom.net",
+        "followers": 23766,
+        "genres": ["indie pop", "alternative"],
+        "submission_pref": "2010s indie and alternative nostalgia. Pitch artists with that era's jangly, melodic aesthetic.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/3sCXpyujWoLScwx3HhvRtf",
     },
 
-    # ── Electronic / dance (3) ───────────────────────────────────────────────
+    # ── Electronic (3) ───────────────────────────────────────────────────────
     {
-        "name": "Warehouse Frequency",
-        "curator": "Lena Kovacs",
+        "name": "LO MEJOR EN ELECTRONICA",
+        "curator": "Buen chico",
         "platform": "Spotify",
-        "followers": 71000,
-        "genres": ["techno", "house", "electronic", "dance"],
-        "submission_pref": (
-            "Warehouse and club-focused electronic only. Lena DJs herself and "
-            "only adds tracks she would play at 2am. Demos are fine — she doesn't "
-            "care about mastering as long as the energy is right."
-        ),
-        "contact": "lena@warehousefreq.com",
+        "followers": 212827,
+        "genres": ["electronic", "edm", "dance"],
+        "submission_pref": "Best electronic music compilation. Pitch high-energy, well-produced electronic tracks.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/0D3OBV654y6cJRwg9bztkk",
     },
     {
-        "name": "Dissolve",
-        "curator": "Finn Albrecht",
+        "name": "Best Electronic Music Of All Time",
+        "curator": "PlaylistStation",
         "platform": "Spotify",
-        "followers": 38000,
-        "genres": ["ambient", "electronic", "downtempo", "future beats"],
-        "submission_pref": (
-            "Slow, textural electronic music for focus and late nights. Finn "
-            "specifically looks for artists from outside Western Europe and the US — "
-            "strong interest in Southeast Asian and African electronic producers."
-        ),
-        "contact": "finn@dissolveplaylist.com",
+        "followers": 75096,
+        "genres": ["electronic", "edm"],
+        "submission_pref": "Iconic electronic tracks. Pitch artists whose work has timeless dancefloor or listening appeal.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/3tRhisNDv5YZXPQltBbJNc",
     },
     {
-        "name": "Peak Hour",
-        "curator": "Camille Dubois",
+        "name": "100 Most Iconic EDM Songs",
+        "curator": "Ray Fontaine",
         "platform": "Spotify",
-        "followers": 29000,
-        "genres": ["afro house", "afrobeats", "latin house", "dance"],
-        "submission_pref": (
-            "Dancefloor-ready only. Camille curates for gym and pregame playlists "
-            "— high energy, rhythmic, global influences. Especially interested in "
-            "afro house and latin-inflected dance tracks."
-        ),
-        "contact": "camille@peakhourmusic.com",
+        "followers": 59993,
+        "genres": ["electronic", "edm", "dance"],
+        "submission_pref": "Iconic EDM deep cuts and anthems. Pitch tracks with broad electronic appeal.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/7uMtlAoZ82WCBNlHtNH35l",
     },
 
-    # ── K-pop / J-music (2) ──────────────────────────────────────────────────
+    # ── R&B (2) ──────────────────────────────────────────────────────────────
     {
-        "name": "Seoul to the World",
-        "curator": "Hana Yoshida",
+        "name": "best rnb playlist",
+        "curator": "Travnextdoor",
         "platform": "Spotify",
-        "followers": 58000,
-        "genres": ["k-pop", "k-indie", "k-r&b"],
-        "submission_pref": (
-            "K-pop and Korean indie — both big acts and deep cuts. Hana is "
-            "particularly interested in artists breaking outside South Korea for "
-            "the first time. Highlights artists with strong fancam or short-form "
-            "video traction."
-        ),
-        "contact": "hana@seoultotheworldfm.com",
+        "followers": 291587,
+        "genres": ["r&b", "neo soul"],
+        "submission_pref": "Community-built R&B. Pitch smooth, melodic R&B with strong hooks.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/5zCdhPJHI9kgYsgkSBEWT0",
     },
     {
-        "name": "Shibuya Crossing",
-        "curator": "Kenji Mori",
+        "name": "R&B 2026 - New R&B Hits / Top RnB Songs",
+        "curator": "Fox",
         "platform": "Spotify",
-        "followers": 21000,
-        "genres": ["j-pop", "city pop", "j-rock", "japanese indie"],
-        "submission_pref": (
-            "Japanese music only — city pop revivals, contemporary J-pop, and "
-            "Japanese indie. Kenji is actively looking for artists under 50k "
-            "monthly listeners who are building international audiences."
-        ),
-        "contact": "kenji@shibuyacrossing.fm",
+        "followers": 89341,
+        "genres": ["r&b", "contemporary r&b"],
+        "submission_pref": "Current R&B hits. Pitch new releases with contemporary production and strong vocals.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/3We3LenpVndqS3rUCP0MeY",
     },
 
-    # ── Funk / soul classics (2) ─────────────────────────────────────────────
+    # ── Funk (4) ─────────────────────────────────────────────────────────────
     {
-        "name": "Crate Therapy",
-        "curator": "Winston Osei",
+        "name": "FUNK 2026 - AS MELHORES | TOP 100",
+        "curator": "pzmusicplaylists",
         "platform": "Spotify",
-        "followers": 34000,
-        "genres": ["funk", "soul", "classic soul", "rare groove"],
-        "submission_pref": (
-            "Classic and modern funk — Winston runs a vintage record shop and "
-            "curates this playlist as a companion to his weekly radio show. "
-            "New artists are welcome if they have genuine funk roots, not just "
-            "funk-influenced pop."
-        ),
-        "contact": "winston@cratetherapy.fm",
+        "followers": 476271,
+        "genres": ["funk", "brazilian funk", "phonk"],
+        "submission_pref": "Brazilian funk and phonk. Pitch high-energy, bass-heavy funk tracks.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/0g9DQ9UB0Vr1y3KwgAXr1C",
     },
     {
-        "name": "Mothership Groove",
-        "curator": "Diana Ferreira",
+        "name": "TOP 10 MOST VIRAL PHONK/FUNK 2026",
+        "curator": "Hitsi",
         "platform": "Spotify",
-        "followers": 17500,
-        "genres": ["funk", "afrobeat", "soul", "jazz funk"],
-        "submission_pref": (
-            "Groove-first curation — Diana wants to feel the pocket immediately. "
-            "Strong affinity for afrobeat and jazz-funk crossover artists. "
-            "Will fast-track submissions that include a live session video."
-        ),
-        "contact": "diana@mothershipgroove.com",
-    },
-
-    # ── Metalcore / punk (2) ─────────────────────────────────────────────────
-    {
-        "name": "Breakdown Theory",
-        "curator": "Sam Kowalski",
-        "platform": "Spotify",
-        "followers": 46000,
-        "genres": ["metalcore", "post-hardcore", "hardcore"],
-        "submission_pref": (
-            "Metalcore and post-hardcore with melodic elements — not pure death "
-            "metal. Sam updates weekly and is actively hunting for acts playing "
-            "small venues who haven't been picked up by algorithm playlists yet."
-        ),
-        "contact": "sam@breakdowntheory.net",
+        "followers": 209932,
+        "genres": ["funk", "phonk"],
+        "submission_pref": "Viral phonk and funk. Pitch tracks with strong TikTok or short-form video momentum.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/39yEFHNrv2IzDHxo7XaXi6",
     },
     {
-        "name": "Fast & Loud",
-        "curator": "Bex Harrington",
+        "name": "TOP FUNK/PHONK MARCH 2026",
+        "curator": "melovrant",
         "platform": "Spotify",
-        "followers": 22000,
-        "genres": ["pop punk", "punk", "emo", "poppunkers"],
-        "submission_pref": (
-            "Pop punk and emo with no major label affiliation. Bex specifically "
-            "champions artists from outside the US and UK — Australia, Brazil, "
-            "Southeast Asia. If your band practises in a garage, Bex wants to hear it."
-        ),
-        "contact": "bex@fastandloud.fm",
+        "followers": 131977,
+        "genres": ["funk", "phonk"],
+        "submission_pref": "Monthly funk/phonk drops. Pitch new releases with dark, aggressive energy.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/3nBpNPEsB5cbKUlu6iHVrm",
+    },
+    {
+        "name": "Top 100 Funk Songs of All Time",
+        "curator": "Student of Guitar",
+        "platform": "Spotify",
+        "followers": 11421,
+        "genres": ["funk", "classic funk", "soul"],
+        "submission_pref": "Classic funk deep cuts. Pitch artists with genuine groove and live-instrument funk roots.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/01ShyhH6iluuvP0fcMcwWz",
     },
 
-    # ── Mixed / discovery (1) ────────────────────────────────────────────────
+    # ── Metalcore (5) ────────────────────────────────────────────────────────
     {
-        "name": "Global Sounds Weekly",
-        "curator": "Priya Nair",
+        "name": "Sad Metalcore - emotional metal",
+        "curator": "Camille",
         "platform": "Spotify",
-        "followers": 18500,
-        "genres": ["world music", "afrobeats", "latin", "global", "discovery"],
-        "submission_pref": (
-            "Priya curates this as a genuine discovery playlist — no genre "
-            "restrictions, but the artist must be making their first wave of "
-            "international traction. Under 10k monthly listeners on Spotify "
-            "strongly preferred. Loves data — include your Reddit or TikTok stats."
-        ),
-        "contact": "submissions@globalsoundsweekly.com",
+        "followers": 123384,
+        "genres": ["metalcore", "post-hardcore", "emotional metal"],
+        "submission_pref": "Emotional metalcore and post-hardcore. Pitch tracks that balance heaviness with melodic vulnerability.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/2j2EjOpLbuirl7IHx58av3",
+    },
+    {
+        "name": "Best Metalcore Songs of All Time",
+        "curator": "Discover Playlists",
+        "platform": "Spotify",
+        "followers": 27397,
+        "genres": ["metalcore", "post-hardcore"],
+        "submission_pref": "Best-of metalcore. Pitch tracks with memorable breakdowns and strong production.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/1GKqC6Rq1O3o97UwWMuiq6",
+    },
+    {
+        "name": "New Metalcore 2026",
+        "curator": "RIFF CULT",
+        "platform": "Spotify",
+        "followers": 19197,
+        "genres": ["metalcore", "deathcore", "hardcore"],
+        "submission_pref": "Current metalcore releases. Pitch new tracks from emerging or mid-tier metalcore acts.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/280unJx37YbHbRvPDlZxPi",
+    },
+    {
+        "name": "2000s Metalcore ('00-'09)",
+        "curator": "Loudwire",
+        "platform": "Spotify",
+        "followers": 13561,
+        "genres": ["metalcore", "post-hardcore"],
+        "submission_pref": "2000s metalcore revival. Pitch artists with classic metalcore energy from that golden era.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/0DGWifoSIv93af63X0t1CL",
+    },
+    {
+        "name": "gym bro metal",
+        "curator": "Camille",
+        "platform": "Spotify",
+        "followers": 11578,
+        "genres": ["metalcore", "metal", "hardcore"],
+        "submission_pref": "High-energy metal for workouts. Pitch heavy, aggressive tracks with intense energy.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/1PNaaXHO0aut3nHGCiVD7o",
+    },
+
+    # ── K-pop (1) ────────────────────────────────────────────────────────────
+    {
+        "name": "Kpop demon hunters",
+        "curator": "Evelinavasiltsov",
+        "platform": "Spotify",
+        "followers": 462113,
+        "genres": ["k-pop"],
+        "submission_pref": "K-pop fan playlist with a dark/anime aesthetic. Pitch powerful, dramatic K-pop tracks.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/4dFzPZLPXFzUd6C0bNwIk5",
+    },
+
+    # ── Bedroom pop (1) ──────────────────────────────────────────────────────
+    {
+        "name": "soft pop - chill vibes",
+        "curator": "Emillyy",
+        "platform": "Spotify",
+        "followers": 12734,
+        "genres": ["bedroom pop", "lo-fi", "chill pop"],
+        "submission_pref": "Soft, chill bedroom pop. Pitch intimate, lo-fi productions with gentle vocals.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/0X0HGO3RiqTG40GTftGBGZ",
+    },
+
+    # ── Latin (4) ────────────────────────────────────────────────────────────
+    {
+        "name": "LAS MEJORES BACHATAS - Mix Bachatero 2026",
+        "curator": "gabodeweb",
+        "platform": "Spotify",
+        "followers": 329871,
+        "genres": ["latin", "bachata", "reggaeton"],
+        "submission_pref": "Latin and bachata hits. Pitch romantic, rhythm-driven Latin tracks.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/23fCZVEuepIebZIFQuV2Ra",
+    },
+    {
+        "name": "Best Latino Hits",
+        "curator": "vale",
+        "platform": "Spotify",
+        "followers": 185695,
+        "genres": ["latin", "reggaeton", "pop latino"],
+        "submission_pref": "Best of Latin music. Pitch high-energy, catchy Latino tracks across sub-genres.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/0x5sdZSd4GbYmAucCshEsO",
+    },
+    {
+        "name": "hot latina songs to hype u up",
+        "curator": "Shira Gur Aryeh",
+        "platform": "Spotify",
+        "followers": 142155,
+        "genres": ["latin", "reggaeton", "dancehall"],
+        "submission_pref": "Hype Latin tracks for energy and confidence. Pitch upbeat, empowering Latin hits.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/6d6M36KHuTToUW4YMlyyaw",
+    },
+    {
+        "name": "latino club bangers",
+        "curator": "kassandra soto millan",
+        "platform": "Spotify",
+        "followers": 33357,
+        "genres": ["latin", "reggaeton", "latin house"],
+        "submission_pref": "Club-ready Latin music. Pitch dancefloor Latin tracks with strong bass and rhythm.",
+        "contact": "",
+        "spotify_url": "https://open.spotify.com/playlist/4uaIqklVL5SosVhleRrJ5H",
     },
 ]
 

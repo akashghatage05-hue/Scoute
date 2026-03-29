@@ -2,6 +2,7 @@ from flask import Flask, render_template_string, redirect, request
 from pathlib import Path
 import json, os, re, subprocess, threading
 from dotenv import load_dotenv
+from scoute.agents.ghostwriter import SAMPLE_CURATORS
 load_dotenv()
 
 app = Flask(__name__)
@@ -255,28 +256,37 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(fmin)fmin.addEventListener('input',applyFilters);
   if(fmax)fmax.addEventListener('input',applyFilters);
 });
-// ── Curator data ────────────────────────────────────────────────────────────
+// ── Curator data (29 real Spotify playlists — auto-generated 2026-03-29) ────
 const CURATORS=[
-  {name:"Street Signals",curator:"Marcus Webb",followers:87000,genres:["hip hop","rap","underground hip hop"]},
-  {name:"Drill Season",curator:"Darius Okafor",followers:54000,genres:["uk drill","chicago drill","trap"]},
-  {name:"Block Report",curator:"Aaliya Thompson",followers:31000,genres:["hip hop","rap","conscious rap","jazz rap"]},
-  {name:"Unsigned & Unfiltered",curator:"Jerome 'JB' Baptiste",followers:19500,genres:["hip hop","rap","bedroom rap","lo-fi hip hop"]},
-  {name:"Silk & Static",curator:"Renee Holloway",followers:62000,genres:["r&b","neo soul","alternative r&b"]},
-  {name:"Late Night Feels",curator:"Tobias Mensah",followers:44500,genres:["r&b","soul","quiet storm","slow jams"]},
-  {name:"Church Clothes",curator:"Simone Adeyemi",followers:27000,genres:["soul","gospel soul","r&b","neo soul"]},
-  {name:"The Indie Pulse",curator:"Jamie Rivera",followers:42000,genres:["indie pop","bedroom pop","lo-fi"]},
-  {name:"Four Walls",curator:"Elspeth Crane",followers:23000,genres:["bedroom pop","dream pop","shoegaze","indie folk"]},
-  {name:"Static Bloom",curator:"Noah Fitzpatrick",followers:16000,genres:["indie rock","emo","indie pop","post-punk"]},
-  {name:"Warehouse Frequency",curator:"Lena Kovacs",followers:71000,genres:["techno","house","electronic","dance"]},
-  {name:"Dissolve",curator:"Finn Albrecht",followers:38000,genres:["ambient","electronic","downtempo","future beats"]},
-  {name:"Peak Hour",curator:"Camille Dubois",followers:29000,genres:["afro house","afrobeats","latin house","dance"]},
-  {name:"Seoul to the World",curator:"Hana Yoshida",followers:58000,genres:["k-pop","k-indie","k-r&b"]},
-  {name:"Shibuya Crossing",curator:"Kenji Mori",followers:21000,genres:["j-pop","city pop","j-rock","japanese indie"]},
-  {name:"Crate Therapy",curator:"Winston Osei",followers:34000,genres:["funk","soul","classic soul","rare groove"]},
-  {name:"Mothership Groove",curator:"Diana Ferreira",followers:17500,genres:["funk","afrobeat","soul","jazz funk"]},
-  {name:"Breakdown Theory",curator:"Sam Kowalski",followers:46000,genres:["metalcore","post-hardcore","hardcore"]},
-  {name:"Fast & Loud",curator:"Bex Harrington",followers:22000,genres:["pop punk","punk","emo","poppunkers"]},
-  {name:"Global Sounds Weekly",curator:"Priya Nair",followers:18500,genres:["world music","afrobeats","latin","global","discovery"]},
+  {name:"Hip Hop 2000s Music - Best Hip Hop Hits",curator:"Redlist Playlists",followers:261619,genres:["hip hop","rap"]},
+  {name:"90\u2019s & 2000\u2019s Hip Hop Bangers",curator:"Johnny Thunder",followers:165658,genres:["hip hop","rap"]},
+  {name:"Best of HipHop (2000-2026)",curator:"Quentin McCorvey Jr.",followers:72337,genres:["hip hop","rap"]},
+  {name:"2000s R&B & Hip-Hop Playlist",curator:"RSullivan",followers:314871,genres:["soul","r&b","hip hop"]},
+  {name:"Best Soul Of All Time",curator:"Fred",followers:45109,genres:["soul","classic soul"]},
+  {name:"Soul Eater | openings & endings",curator:"AniPlaylist",followers:31755,genres:["soul","anime"]},
+  {name:"POOL PARTY 2026 - SUMMER HITS",curator:"Filtr US",followers:82217,genres:["indie pop","pop"]},
+  {name:"Best indie songs of all time",curator:"Jen Affleck",followers:70997,genres:["indie pop","indie rock","alternative"]},
+  {name:"2010's Alternative/Indie Pop",curator:"gabemendezm1",followers:23766,genres:["indie pop","alternative"]},
+  {name:"LO MEJOR EN ELECTRONICA",curator:"Buen chico",followers:212827,genres:["electronic","edm","dance"]},
+  {name:"Best Electronic Music Of All Time",curator:"PlaylistStation",followers:75096,genres:["electronic","edm"]},
+  {name:"100 Most Iconic EDM Songs",curator:"Ray Fontaine",followers:59993,genres:["electronic","edm","dance"]},
+  {name:"best rnb playlist",curator:"Travnextdoor",followers:291587,genres:["r&b","neo soul"]},
+  {name:"R&B 2026 - New R&B Hits / Top RnB Songs",curator:"Fox",followers:89341,genres:["r&b","contemporary r&b"]},
+  {name:"FUNK 2026 - AS MELHORES | TOP 100",curator:"pzmusicplaylists",followers:476271,genres:["funk","brazilian funk","phonk"]},
+  {name:"TOP 10 MOST VIRAL PHONK/FUNK 2026",curator:"Hitsi",followers:209932,genres:["funk","phonk"]},
+  {name:"TOP FUNK/PHONK MARCH 2026",curator:"melovrant",followers:131977,genres:["funk","phonk"]},
+  {name:"Top 100 Funk Songs of All Time",curator:"Student of Guitar",followers:11421,genres:["funk","classic funk","soul"]},
+  {name:"Sad Metalcore - emotional metal",curator:"Camille",followers:123384,genres:["metalcore","post-hardcore","emotional metal"]},
+  {name:"Best Metalcore Songs of All Time",curator:"Discover Playlists",followers:27397,genres:["metalcore","post-hardcore"]},
+  {name:"New Metalcore 2026",curator:"RIFF CULT",followers:19197,genres:["metalcore","deathcore","hardcore"]},
+  {name:"2000s Metalcore ('00-'09)",curator:"Loudwire",followers:13561,genres:["metalcore","post-hardcore"]},
+  {name:"gym bro metal",curator:"Camille",followers:11578,genres:["metalcore","metal","hardcore"]},
+  {name:"Kpop demon hunters",curator:"Evelinavasiltsov",followers:462113,genres:["k-pop"]},
+  {name:"soft pop - chill vibes",curator:"Emillyy",followers:12734,genres:["bedroom pop","lo-fi","chill pop"]},
+  {name:"LAS MEJORES BACHATAS - Mix Bachatero 2026",curator:"gabodeweb",followers:329871,genres:["latin","bachata","reggaeton"]},
+  {name:"Best Latino Hits",curator:"vale",followers:185695,genres:["latin","reggaeton","pop latino"]},
+  {name:"hot latina songs to hype u up",curator:"Shira Gur Aryeh",followers:142155,genres:["latin","reggaeton","dancehall"]},
+  {name:"latino club bangers",curator:"kassandra soto millan",followers:33357,genres:["latin","reggaeton","latin house"]},
 ];
 const SUB_GENRES={
   hiphopheads:["hip hop","rap"],indieheads:["indie pop","indie rock"],
@@ -408,7 +418,7 @@ def home():
     stats = f"""<div class="stats">
 <div class="stat-card"><div class="stat-num" id="c1" data-val="{len(scout)}">0</div><div class="stat-label">Trending Tracks</div></div>
 <div class="stat-card"><div class="stat-num" id="c2" data-val="{len(arb)}">0</div><div class="stat-label">Artists Ranked</div></div>
-<div class="stat-card"><div class="stat-num" id="c3" data-val="20">0</div><div class="stat-label">Playlist Curators</div></div>
+<div class="stat-card"><div class="stat-num" id="c3" data-val="{len(SAMPLE_CURATORS)}">0</div><div class="stat-label">Playlist Curators</div></div>
 <div class="stat-card"><div class="stat-num" id="c4" data-val="{top_score:.2f}">0</div><div class="stat-label">Top Breakout Score</div></div>
 </div>"""
 

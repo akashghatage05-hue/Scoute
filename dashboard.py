@@ -256,37 +256,20 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(fmin)fmin.addEventListener('input',applyFilters);
   if(fmax)fmax.addEventListener('input',applyFilters);
 });
-// ── Curator data (29 real Spotify playlists — auto-generated 2026-03-29) ────
+// ── Curator data (12 real Spotify playlists — auto-generated 2026-04-16, Indian music) ────
 const CURATORS=[
-  {name:"Hip Hop 2000s Music - Best Hip Hop Hits",curator:"Redlist Playlists",followers:261619,genres:["hip hop","rap"]},
-  {name:"90\u2019s & 2000\u2019s Hip Hop Bangers",curator:"Johnny Thunder",followers:165658,genres:["hip hop","rap"]},
-  {name:"Best of HipHop (2000-2026)",curator:"Quentin McCorvey Jr.",followers:72337,genres:["hip hop","rap"]},
-  {name:"2000s R&B & Hip-Hop Playlist",curator:"RSullivan",followers:314871,genres:["soul","r&b","hip hop"]},
-  {name:"Best Soul Of All Time",curator:"Fred",followers:45109,genres:["soul","classic soul"]},
-  {name:"Soul Eater | openings & endings",curator:"AniPlaylist",followers:31755,genres:["soul","anime"]},
-  {name:"POOL PARTY 2026 - SUMMER HITS",curator:"Filtr US",followers:82217,genres:["indie pop","pop"]},
-  {name:"Best indie songs of all time",curator:"Jen Affleck",followers:70997,genres:["indie pop","indie rock","alternative"]},
-  {name:"2010's Alternative/Indie Pop",curator:"gabemendezm1",followers:23766,genres:["indie pop","alternative"]},
-  {name:"LO MEJOR EN ELECTRONICA",curator:"Buen chico",followers:212827,genres:["electronic","edm","dance"]},
-  {name:"Best Electronic Music Of All Time",curator:"PlaylistStation",followers:75096,genres:["electronic","edm"]},
-  {name:"100 Most Iconic EDM Songs",curator:"Ray Fontaine",followers:59993,genres:["electronic","edm","dance"]},
-  {name:"best rnb playlist",curator:"Travnextdoor",followers:291587,genres:["r&b","neo soul"]},
-  {name:"R&B 2026 - New R&B Hits / Top RnB Songs",curator:"Fox",followers:89341,genres:["r&b","contemporary r&b"]},
-  {name:"FUNK 2026 - AS MELHORES | TOP 100",curator:"pzmusicplaylists",followers:476271,genres:["funk","brazilian funk","phonk"]},
-  {name:"TOP 10 MOST VIRAL PHONK/FUNK 2026",curator:"Hitsi",followers:209932,genres:["funk","phonk"]},
-  {name:"TOP FUNK/PHONK MARCH 2026",curator:"melovrant",followers:131977,genres:["funk","phonk"]},
-  {name:"Top 100 Funk Songs of All Time",curator:"Student of Guitar",followers:11421,genres:["funk","classic funk","soul"]},
-  {name:"Sad Metalcore - emotional metal",curator:"Camille",followers:123384,genres:["metalcore","post-hardcore","emotional metal"]},
-  {name:"Best Metalcore Songs of All Time",curator:"Discover Playlists",followers:27397,genres:["metalcore","post-hardcore"]},
-  {name:"New Metalcore 2026",curator:"RIFF CULT",followers:19197,genres:["metalcore","deathcore","hardcore"]},
-  {name:"2000s Metalcore ('00-'09)",curator:"Loudwire",followers:13561,genres:["metalcore","post-hardcore"]},
-  {name:"gym bro metal",curator:"Camille",followers:11578,genres:["metalcore","metal","hardcore"]},
-  {name:"Kpop demon hunters",curator:"Evelinavasiltsov",followers:462113,genres:["k-pop"]},
-  {name:"soft pop - chill vibes",curator:"Emillyy",followers:12734,genres:["bedroom pop","lo-fi","chill pop"]},
-  {name:"LAS MEJORES BACHATAS - Mix Bachatero 2026",curator:"gabodeweb",followers:329871,genres:["latin","bachata","reggaeton"]},
-  {name:"Best Latino Hits",curator:"vale",followers:185695,genres:["latin","reggaeton","pop latino"]},
-  {name:"hot latina songs to hype u up",curator:"Shira Gur Aryeh",followers:142155,genres:["latin","reggaeton","dancehall"]},
-  {name:"latino club bangers",curator:"kassandra soto millan",followers:33357,genres:["latin","reggaeton","latin house"]},
+  {name:"Travel Songs (Hindi) | Bollywood Roadtrip Hindi | Indie Travels",curator:"Aesthetic Gaane",followers:223089,genres:["hindi indie","bollywood","indian indie"]},
+  {name:"\ud83c\uddee\ud83c\uddf3Indian remix\ud83c\uddee\ud83c\uddf3",curator:"Bertram O'Reilly Poulsen",followers:177658,genres:["indian rap","bollywood remix","desi beats"]},
+  {name:"Desi songs which make you wanna chammak challo",curator:"Moxie",followers:79305,genres:["desi beats","bollywood","indian pop"]},
+  {name:"Indian meme music",curator:"Aksel",followers:54514,genres:["indian rap","desi hip hop","indian pop"]},
+  {name:"Hindi Pop Songs",curator:"mahimarajvirsingh",followers:44237,genres:["hindi pop","bollywood","hindi indie"]},
+  {name:"Best Hindi Songs of All Time 2025",curator:"Rohit",followers:28439,genres:["bollywood","hindi pop","indian indie"]},
+  {name:"Famous Indian Song",curator:"Carlo.Chua",followers:25198,genres:["indian indie","bollywood","indian pop"]},
+  {name:"hIndie",curator:"Rajanand Lonkar",followers:21979,genres:["hindi indie","indian indie","indie pop"]},
+  {name:"Trending Hindi Rap Songs 2026",curator:"i lovemusic",followers:21549,genres:["indian hip hop","hindi rap","desi rap"]},
+  {name:"INDIAN PARTY HITS",curator:"Aliyah",followers:17384,genres:["indian pop","bollywood","desi rap"]},
+  {name:"EK Number Hip Hop (Indian Hip Hop Hits)",curator:"Radial India",followers:13310,genres:["indian hip hop","desi hip hop","hip hop"]},
+  {name:"Desi Party",curator:"shenaeze",followers:12356,genres:["desi beats","bhangra","bollywood"]},
 ];
 const SUB_GENRES={
   hiphopheads:["hip hop","rap"],indieheads:["indie pop","indie rock"],
@@ -301,6 +284,13 @@ const SUB_GENRES={
   metalcore:["metalcore","post-hardcore","hardcore"],DJs:["electronic","house","techno","dance"],
   funk:["funk","soul","jazz funk"],soul:["soul","r&b","gospel soul"],
   jazz:["jazz","jazz rap","jazz funk"],futurebeats:["future beats","electronic","downtempo","ambient"],
+  IndianHipHop:["indian hip hop","desi rap","hindi rap","desi hip hop"],
+  hindimusic:["hindi pop","bollywood","hindi indie","indian indie"],
+  IndianaMusic:["hindi pop","bollywood","indian indie","indian pop"],
+  bollywood:["bollywood","hindi pop","indian pop","desi beats"],
+  IndieIndia:["indian indie","hindi indie","indie pop","bollywood"],
+  sangheats:["desi beats","bhangra","bollywood","indian pop"],
+  desirap:["desi rap","indian hip hop","hindi rap","desi hip hop"],
 };
 // ── Curator modal ─────────────────────────────────────────────────────────────
 function openPitchModal(btn){
@@ -516,9 +506,9 @@ def home():
         '<form method="POST" action="/run" style="margin:0"><button type="submit" class="btn-run">&#9654; Run Pipeline</button></form>'
     )
     body = f"""<div class="hero">
-<div class="hero-eye">&#9670; AI Music Intelligence Platform</div>
+<div class="hero-eye">&#9670; AI Music Intelligence — India</div>
 <h1 class="hero-title">Discover Artists<br><span class="gradient-text">Before They Blow Up</span></h1>
-<p class="hero-sub">Real-time Reddit signals. Zero guesswork. Pure arbitrage.</p>
+<p class="hero-sub">India's first AI music intelligence platform. Find Indian artists before they blow up.</p>
 {stats}</div>
 <div class="section">
 <div class="section-header"><div class="section-title">Arbitrage Opportunities</div>

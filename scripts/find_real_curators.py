@@ -26,16 +26,12 @@ load_dotenv()
 # ── Config ────────────────────────────────────────────────────────────────────
 
 GENRES = [
-    "hip hop",
-    "soul",
-    "indie pop",
-    "electronic",
-    "R&B",
-    "funk",
-    "metalcore",
-    "k-pop",
-    "bedroom pop",
-    "latin",
+    "hindi indie",
+    "indian hip hop",
+    "desi beats",
+    "indian indie",
+    "bollywood indie",
+    "indian rap",
 ]
 
 MIN_FOLLOWERS = 10_000

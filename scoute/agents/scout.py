@@ -61,6 +61,14 @@ SUBREDDITS = [
     "jazz",
     # Future / experimental
     "futurebeats",
+    # Indian music
+    "IndianHipHop",
+    "hindimusic",
+    "IndianaMusic",
+    "bollywood",
+    "IndieIndia",
+    "sangheats",
+    "desirap",
 ]
 
 REDDIT_HEADERS = {

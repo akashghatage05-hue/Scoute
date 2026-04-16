@@ -9,10 +9,11 @@ app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
 
-def sanitize_text(text):
+def sanitize(text):
     if not isinstance(text, str):
-        return str(text) if text is not None else ""
-    return text.encode('utf-8', errors='replace').decode('utf-8', errors='replace')
+        text = str(text) if text is not None else ""
+    # Remove surrogate characters that break UTF-8
+    return text.encode('utf-8', errors='ignore').decode('utf-8')
 
 ARB_PATH   = Path("scoute/data/arbitrage_results.json")
 SCOUT_PATH = Path("scoute/data/scout_results.json")
@@ -387,16 +388,18 @@ def load_data(path: Path, bin_name: str) -> list:
     """
     Pull from JSONbin when JSONBIN_KEY is set, fall back to local file.
     Bin IDs are read from .jsonbin_ids.json (written by the local pipeline).
+    Always returns a list — never raises.
     """
-    if os.environ.get("JSONBIN_KEY"):
-        try:
+    try:
+        if os.environ.get("JSONBIN_KEY"):
             from scoute.storage import pull_from_jsonbin
             data = pull_from_jsonbin(bin_name)
             if data is not None:
-                return data
-        except Exception:
-            pass
-    return load_json(path)
+                return data if isinstance(data, list) else []
+        return load_json(path)
+    except Exception as exc:
+        app.logger.warning(f"load_data failed for '{bin_name}': {exc}")
+        return []
 
 def yt_url(name): return f"https://music.youtube.com/search?q={name.replace(' ','+')}"
 def sp_url(name): return f"https://open.spotify.com/search/{name.replace(' ','%20')}"
@@ -408,6 +411,14 @@ def star_html(score):
 
 @app.route("/")
 def home():
+    try:
+        return _home_inner()
+    except Exception as exc:
+        app.logger.error(f"home() crashed: {exc}", exc_info=True)
+        body = '<div class="empty" style="padding:6rem 2rem"><span class="empty-icon" style="font-size:40px;display:block;margin-bottom:1rem">⚠️</span><div style="color:#e2e8f0;font-size:18px;margin-bottom:0.5rem">Pipeline data unavailable</div><div style="color:#475569;font-size:14px">The data service is temporarily unreachable. Try refreshing in a moment.</div></div>'
+        return render_template_string(HTML, page_title="Home", active="home", body=body)
+
+def _home_inner():
     arb = load_data(ARB_PATH, "arbitrage_results")
     scout = load_data(SCOUT_PATH, "scout_results")
     top_score = arb[0]['arbitrage_score'] if arb else 0
@@ -427,8 +438,8 @@ def home():
         score = a.get('arbitrage_score',0)
         fans = a.get('deezer_fans',0)
         reddit = a.get('reddit_score',0)
-        name = sanitize_text(a.get('artist',''))
-        sub = sanitize_text(a.get('subreddit',''))
+        name = sanitize(a.get('artist',''))
+        sub = sanitize(a.get('subreddit',''))
         pct = min(100, score/max_score*100)
         sclass = 'score-high' if score>=1.0 else 'score-mid' if score>=0.5 else 'score-low'
         bar_bg = 'linear-gradient(90deg,#a855f7,#22d3ee)' if score>=1.0 else 'linear-gradient(90deg,#7c3aed,#a855f7)' if score>=0.5 else 'linear-gradient(90deg,#334155,#475569)'
@@ -446,7 +457,7 @@ def home():
 <td><button class="btn-pitch" onclick="openPitchModal(this)">Match Curators</button></td>
 </tr>"""
 
-    subs = sorted({sanitize_text(a.get('subreddit','')) for a in arb if a.get('subreddit','')})
+    subs = sorted({sanitize(a.get('subreddit','')) for a in arb if a.get('subreddit','')})
     sub_opts = ''.join(f'<option value="{s}">{s}</option>' for s in subs)
     total = len(arb)
 
@@ -527,11 +538,19 @@ def home():
 
 @app.route("/scout")
 def scout():
+    try:
+        return _scout_inner()
+    except Exception as exc:
+        app.logger.error(f"scout() crashed: {exc}", exc_info=True)
+        body = '<div class="empty" style="padding:6rem 2rem"><span class="empty-icon" style="font-size:40px;display:block;margin-bottom:1rem">⚠️</span><div style="color:#e2e8f0;font-size:18px;margin-bottom:0.5rem">Scout data unavailable</div><div style="color:#475569;font-size:14px">The data service is temporarily unreachable. Try refreshing in a moment.</div></div>'
+        return render_template_string(HTML, page_title="Scout", active="scout", body=body)
+
+def _scout_inner():
     data = load_data(SCOUT_PATH, "scout_results")
     rows = ""
     for i,t in enumerate(data):
-        artist=sanitize_text(t.get('artist','')); song=sanitize_text(t.get('song','')); sub=sanitize_text(t.get('subreddit',''))
-        url=sanitize_text(t.get('url','')); rurl=sanitize_text(t.get('reddit_url','')); ups=t.get('upvotes',t.get('score',0)); cmts=t.get('comments',0)
+        artist=sanitize(t.get('artist','')); song=sanitize(t.get('song','')); sub=sanitize(t.get('subreddit',''))
+        url=sanitize(t.get('url','')); rurl=sanitize(t.get('reddit_url','')); ups=t.get('upvotes',t.get('score',0)); cmts=t.get('comments',0)
         song_html = f'<a href="{url}" target="_blank" style="color:#22d3ee;text-decoration:none">{song}</a>' if url else song or '—'
         thread = f'<a href="{rurl}" target="_blank" class="pill pill-c">Thread ↗</a>' if rurl else ''
         rows += f"""<div class="track-row">
@@ -617,7 +636,7 @@ def waitlist_admin():
     except Exception:
         signups = []
     rows = "".join(
-        f'<tr><td>{i+1}</td><td>{sanitize_text(s.get("name",""))}</td><td>{sanitize_text(s.get("email",""))}</td><td>{sanitize_text(s.get("source",""))}</td><td>{sanitize_text(s.get("artist",""))}</td><td>{sanitize_text(s.get("timestamp",""))}</td></tr>'
+        f'<tr><td>{i+1}</td><td>{sanitize(s.get("name",""))}</td><td>{sanitize(s.get("email",""))}</td><td>{sanitize(s.get("source",""))}</td><td>{sanitize(s.get("artist",""))}</td><td>{sanitize(s.get("timestamp",""))}</td></tr>'
         for i, s in enumerate(signups)
     )
     return f"""<html><body style="background:#080812;color:#e2e8f0;font-family:'Space Grotesk',sans-serif;padding:2rem">

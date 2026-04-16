@@ -134,14 +134,20 @@ def pull_from_jsonbin(bin_name: str) -> dict | list | None:
         resp = requests.get(
             f"{BASE_URL}/b/{bin_id}/latest",
             headers=_headers(),
-            timeout=10,
+            timeout=30,
         )
         resp.raise_for_status()
         body = resp.json()
         data = body.get("record") if isinstance(body, dict) else body
+        if not isinstance(data, (list, dict)):
+            logger.warning(f"JSONbin '{bin_name}' returned unexpected type: {type(data)}")
+            return []
         count = len(data) if isinstance(data, list) else 1
         logger.info(f"JSONbin '{bin_name}' pulled (bin {bin_id}, {count} records)")
         return data
+    except requests.exceptions.Timeout:
+        logger.warning(f"JSONbin pull timed out for '{bin_name}' — returning empty list")
+        return []
     except Exception as exc:
         logger.warning(f"JSONbin pull failed for '{bin_name}': {exc}")
-        return None
+        return []

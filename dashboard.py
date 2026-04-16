@@ -6,6 +6,13 @@ from scoute.agents.ghostwriter import SAMPLE_CURATORS
 load_dotenv()
 
 app = Flask(__name__)
+app.config['JSON_AS_ASCII'] = False
+
+
+def sanitize_text(text):
+    if not isinstance(text, str):
+        return str(text) if text is not None else ""
+    return text.encode('utf-8', errors='replace').decode('utf-8', errors='replace')
 
 ARB_PATH   = Path("scoute/data/arbitrage_results.json")
 SCOUT_PATH = Path("scoute/data/scout_results.json")
@@ -420,8 +427,8 @@ def home():
         score = a.get('arbitrage_score',0)
         fans = a.get('deezer_fans',0)
         reddit = a.get('reddit_score',0)
-        name = a.get('artist','')
-        sub = a.get('subreddit','')
+        name = sanitize_text(a.get('artist',''))
+        sub = sanitize_text(a.get('subreddit',''))
         pct = min(100, score/max_score*100)
         sclass = 'score-high' if score>=1.0 else 'score-mid' if score>=0.5 else 'score-low'
         bar_bg = 'linear-gradient(90deg,#a855f7,#22d3ee)' if score>=1.0 else 'linear-gradient(90deg,#7c3aed,#a855f7)' if score>=0.5 else 'linear-gradient(90deg,#334155,#475569)'
@@ -439,7 +446,7 @@ def home():
 <td><button class="btn-pitch" onclick="openPitchModal(this)">Match Curators</button></td>
 </tr>"""
 
-    subs = sorted({a.get('subreddit','') for a in arb if a.get('subreddit','')})
+    subs = sorted({sanitize_text(a.get('subreddit','')) for a in arb if a.get('subreddit','')})
     sub_opts = ''.join(f'<option value="{s}">{s}</option>' for s in subs)
     total = len(arb)
 
@@ -523,8 +530,8 @@ def scout():
     data = load_data(SCOUT_PATH, "scout_results")
     rows = ""
     for i,t in enumerate(data):
-        artist=t.get('artist',''); song=t.get('song',''); sub=t.get('subreddit','')
-        url=t.get('url',''); rurl=t.get('reddit_url',''); ups=t.get('upvotes',t.get('score',0)); cmts=t.get('comments',0)
+        artist=sanitize_text(t.get('artist','')); song=sanitize_text(t.get('song','')); sub=sanitize_text(t.get('subreddit',''))
+        url=sanitize_text(t.get('url','')); rurl=sanitize_text(t.get('reddit_url','')); ups=t.get('upvotes',t.get('score',0)); cmts=t.get('comments',0)
         song_html = f'<a href="{url}" target="_blank" style="color:#22d3ee;text-decoration:none">{song}</a>' if url else song or '—'
         thread = f'<a href="{rurl}" target="_blank" class="pill pill-c">Thread ↗</a>' if rurl else ''
         rows += f"""<div class="track-row">
@@ -610,7 +617,7 @@ def waitlist_admin():
     except Exception:
         signups = []
     rows = "".join(
-        f'<tr><td>{i+1}</td><td>{s.get("name","")}</td><td>{s.get("email","")}</td><td>{s.get("source","")}</td><td>{s.get("artist","")}</td><td>{s.get("timestamp","")}</td></tr>'
+        f'<tr><td>{i+1}</td><td>{sanitize_text(s.get("name",""))}</td><td>{sanitize_text(s.get("email",""))}</td><td>{sanitize_text(s.get("source",""))}</td><td>{sanitize_text(s.get("artist",""))}</td><td>{sanitize_text(s.get("timestamp",""))}</td></tr>'
         for i, s in enumerate(signups)
     )
     return f"""<html><body style="background:#080812;color:#e2e8f0;font-family:'Space Grotesk',sans-serif;padding:2rem">

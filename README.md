@@ -1,146 +1,201 @@
-# SCOUTE — AI Music Intelligence Platform
+# SCOUTE — AI Music Intelligence, India
 
-SCOUTE uses three AI agents to surface emerging music talent before it goes mainstream, then helps indie artists get placed on playlists.
+India's first AI music intelligence platform. SCOUTE monitors Indian music communities on Reddit daily, scores artists by the gap between their underground buzz and global reach, and matches them with relevant Spotify playlist curators.
 
-## What it does
+**Find Indian artists before they blow up.**
 
-| Agent | Job | Data source |
-|---|---|---|
-| **Scout** | Finds trending songs across music subreddits | Reddit public JSON feeds — no API key needed |
-| **Arbitrage** | Ranks artists by buzz-to-footprint gap | Deezer public API — no API key needed |
-| **Ghostwriter** | Writes cold pitch emails to playlist curators | Claude API (Anthropic) |
+Live demo: [scoute-production.up.railway.app](https://scoute-production.up.railway.app)
 
-## How the pipeline works
+---
+
+## The Problem
+
+- Indie artists spend hours cold-emailing playlist curators with near-zero success rates
+- Managers and labels miss breakout talent until it's too late and too expensive
+- Curators are flooded with irrelevant pitches that don't match their playlist's sound
+
+SCOUTE solves all three sides of this problem.
+
+---
+
+## How It Works
+
+Three agents run in sequence:
+
+### 1. Scout Agent
+Monitors Indian and global music subreddits daily using Reddit's public JSON feeds — no API key needed.
+
+**Indian subreddits:**
+`r/IndianHipHop` · `r/hindimusic` · `r/IndianaMusic` · `r/bollywood` · `r/IndieIndia` · `r/sangheats` · `r/desirap`
+
+**Global subreddits:**
+`r/hiphopheads` · `r/indieheads` · `r/listentothis` · `r/rnb` · `r/electronicmusic` · `r/undergroundhiphop` · `r/afrobeats` · `r/kpop` · `r/bedroom_pop` · and more
+
+Parses post titles using the standard `Artist — Song [genre]` format, strips prefixes like `[FRESH]` and `[VIDEO]`, and scores each track by upvotes + comment count.
+
+### 2. Arbitrage Agent
+Scores every artist using the **Breakout Score**:
 
 ```
-Reddit hot.json feeds (5 subreddits)
+Breakout Score = log(Reddit Score) / log(Deezer Fans)
+```
+
+High Reddit buzz + low Deezer fans = underground gem about to break. Pulls fan counts from the Deezer public API (no key needed) and Spotify profile URLs for quick listening links.
+
+### 3. Ghostwriter Agent
+Matches top-scoring artists with relevant Spotify playlist curators by genre. The curator database contains 12 real Indian music playlists (10k–500k followers), sourced from Spotify searches for "hindi indie", "indian hip hop", "desi beats", "indian indie", "bollywood indie", and "indian rap".
+
+**Auto-generated pitch emails are coming soon** (requires Anthropic credits).
+
+---
+
+## Pipeline Flow
+
+```
+Reddit hot.json feeds (27 subreddits)
         │
         ▼
    Scout Agent
-   - Fetches hot posts from r/hiphopheads, r/indieheads,
-     r/listentothis, r/rnb, r/electronicmusic
-   - Parses "Artist - Song [genre]" titles
-   - Strips [FRESH], [VIDEO], [DISCUSSION] prefixes
-   - Scores by upvotes + comment count
+   Parses "Artist - Song [genre]" titles
+   Scores by upvotes + comment count
         │
-        ▼ scoute/data/scout_results.json
+        ▼  scoute/data/scout_results.json
         │
    Arbitrage Agent
-   - Looks up each artist on Deezer (fan count as global reach proxy)
-   - Fetches Spotify profile URL via Spotipy (URL only, no chart data)
-   - Arbitrage score = log10(reddit_score + 1) / log10(deezer_fans + 10)
-   - High Reddit buzz + low Deezer fans = hidden gem
+   Deezer fan lookup → Breakout Score
+   High buzz / low fans = opportunity
         │
-        ▼ scoute/data/arbitrage_results.json
+        ▼  scoute/data/arbitrage_results.json
         │
    Ghostwriter Agent
-   - Matches top artists to curator profiles by genre
-   - Calls Claude API to generate personalised pitch emails
-   - Each email: 2 subject line variants, artist bio, stats, soft CTA
+   Genre-based curator matching
+   (Email generation: coming soon)
         │
-        ▼ scoute/outputs/emails/{artist}_{curator}_{date}.md
+        ▼  scoute/outputs/emails/
 ```
 
-## Project structure
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python, Flask |
+| Reddit data | Public `.json` feeds — no API key needed |
+| Artist data | Deezer public API — no API key needed |
+| Curator search | Spotify Web API |
+| Cloud data sync | JSONbin.io |
+| Deployment | Railway |
+| Email generation | Anthropic Claude API (coming soon) |
+| Development | Claude Code |
+
+---
+
+## Project Structure
 
 ```
 scoute/
 ├── scoute/
 │   ├── agents/
-│   │   ├── scout.py          # Reddit JSON feed crawler
-│   │   ├── arbitrage.py      # Deezer + Reddit scoring engine
-│   │   └── ghostwriter.py    # Claude-powered email writer
+│   │   ├── scout.py          # Reddit crawler — 27 subreddits, RSS fallback
+│   │   ├── arbitrage.py      # Deezer + Reddit Breakout Score engine
+│   │   └── ghostwriter.py    # Curator database + Claude email writer
 │   ├── data/                 # Runtime JSON outputs (gitignored)
-│   └── outputs/
-│       └── emails/           # Generated pitch emails (.md)
-├── main.py                   # Orchestrates all three agents
+│   │   ├── scout_results.json
+│   │   ├── arbitrage_results.json
+│   │   └── real_curators.json
+│   ├── outputs/
+│   │   └── emails/           # Generated pitch emails (.md)
+│   ├── storage.py            # JSONbin read/write helpers
+│   └── jsonbin_store.py
+├── scripts/
+│   └── find_real_curators.py # Spotify API — finds real curators by genre
+├── dashboard.py              # Flask web dashboard
+├── main.py                   # Pipeline orchestrator
 ├── requirements.txt
+├── Procfile                  # Railway entry point
+├── runtime.txt
 ├── .env.example
 └── README.md
 ```
 
+---
+
 ## Setup
 
-**1. Install dependencies**
+### 1. Clone and install
+
 ```bash
+git clone https://github.com/akashghatage05-hue/Scoute.git
+cd Scoute
 pip install -r requirements.txt
 ```
 
-**2. Configure API keys**
+### 2. Configure environment variables
+
 ```bash
 cp .env.example .env
 ```
 
-Only two API keys are required:
+Edit `.env` with your credentials:
 
-| Key | Used for | Where to get it |
-|---|---|---|
-| `ANTHROPIC_API_KEY` | Ghostwriter Agent — generates pitch emails | [console.anthropic.com](https://console.anthropic.com) |
-| `SPOTIFY_CLIENT_ID` + `SPOTIFY_CLIENT_SECRET` | Arbitrage Agent — resolves Spotify profile URLs | [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) |
+| Variable | Required | Used for | Where to get it |
+|---|---|---|---|
+| `SPOTIFY_CLIENT_ID` | Yes | Curator search script | [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) |
+| `SPOTIFY_CLIENT_SECRET` | Yes | Curator search script | [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) |
+| `ANTHROPIC_API_KEY` | For emails only | Ghostwriter Agent | [console.anthropic.com](https://console.anthropic.com) |
+| `JSONBIN_KEY` | For cloud sync | Sync data to Railway | [jsonbin.io](https://jsonbin.io) → API Keys |
+| `ADMIN_PASSWORD` | Optional | Waitlist admin page | Any string you choose |
 
-Reddit and Twitter/X API keys are **not required**. The Scout Agent uses Reddit's public `.json` feeds with a browser user-agent header. No authentication needed.
+Reddit and Deezer require **no API keys**. The Scout and Arbitrage agents work out of the box.
 
-## Running the pipeline
+### 3. Run the pipeline
 
-**Full pipeline (all 3 agents in sequence):**
 ```bash
+# Full pipeline — Scout → Arbitrage → Ghostwriter
 python main.py
+
+# Single agent
+python main.py --agent scout       # Reddit crawl only
+python main.py --agent arbitrage   # Scoring only (reads scout_results.json)
+python main.py --agent ghost       # Email matching only (reads arbitrage_results.json)
 ```
 
-**Single agent:**
+### 4. Run the dashboard
+
 ```bash
-python main.py --agent scout       # Step 1 only
-python main.py --agent arbitrage   # Step 2 only (reads scout_results.json)
-python main.py --agent ghost       # Step 3 only (reads arbitrage_results.json)
+python dashboard.py
 ```
 
-### What a real run looks like
+Open [http://localhost:5000](http://localhost:5000).
 
-```
-2026-03-27 [INFO] scoute.main — === SCOUTE starting full pipeline ===
-2026-03-27 [INFO] scoute.main — --- Stage 1: Scout Agent ---
-2026-03-27 [INFO] scout — Fetching Reddit trending tracks...
-2026-03-27 [INFO] scout — Reddit: 19 tracks found across 5 subreddits.
-2026-03-27 [INFO] scout — Scout Agent complete — 19 unique trending tracks found.
+### 5. Find new curators (optional)
 
-2026-03-27 [INFO] scoute.main — --- Stage 2: Arbitrage Agent ---
-2026-03-27 [INFO] arbitrage — Looking up: Larry June (reddit score: 70)
-2026-03-27 [INFO] arbitrage — Looking up: Courtney Barnett (reddit score: 133)
-2026-03-27 [INFO] arbitrage — Looking up: Killer Mike (reddit score: 613)
-...
-2026-03-27 [INFO] arbitrage — Arbitrage Agent complete — 17 artists ranked.
+Edit `scripts/find_real_curators.py` to change the `GENRES` search terms, then:
 
-2026-03-27 [INFO] scoute.main — --- Stage 3: Ghostwriter Agent ---
-2026-03-27 [INFO] ghostwriter — Generating email: Robyn -> The Indie Pulse
-2026-03-27 [INFO] ghostwriter — Generating email: Courtney Barnett -> The Indie Pulse
-2026-03-27 [INFO] ghostwriter — Generating email: Move Your Body -> Global Sounds Weekly
-...
-2026-03-27 [INFO] ghostwriter — Ghostwriter Agent complete - 34 emails generated.
-
-2026-03-27 [INFO] scoute.main — === SCOUTE pipeline complete ===
-2026-03-27 [INFO] scoute.main — Trending tracks found : 19
-2026-03-27 [INFO] scoute.main — Arbitrage opportunities: 17
-2026-03-27 [INFO] scoute.main — Emails generated       : 34
+```bash
+python scripts/find_real_curators.py
 ```
 
-### Sample arbitrage rankings (real output, 2026-03-27)
+Requires `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` in `.env`.
 
-| Rank | Artist | Deezer Fans | Reddit Score | Arb Score |
-|------|--------|-------------|--------------|-----------|
-| 1 | Robyn | 7 | 107 | 1.6526 |
-| 2 | Courtney Barnett | 25 | 133 | 1.3776 |
-| 3 | Move Your Body | 51 | 71 | 1.0403 |
-| 4 | Larry June | 4 | 70 | 1.6152 |
-| 5 | Gelli Haha | 198 | 173 | 0.9666 |
-| 6 | Killer Mike | 13,787 | 613 | 0.6735 |
-| 7 | Snail Mail | 10,791 | 140 | 0.5328 |
+---
 
-Higher arbitrage score = more Reddit buzz relative to global footprint = better discovery opportunity.
+## Roadmap
 
-## Output files
+- [ ] **Email generation** — auto-write personalised curator pitch emails via Claude API (blocked on Anthropic credits)
+- [ ] **Real curator contacts** — manual research to add submission links and emails to the curator database
+- [ ] **More Indian subreddits** — expand coverage as new communities grow
+- [ ] **TikTok and YouTube signals** — add video virality as a second signal layer
+- [ ] **User accounts and payments** — artists pay to unlock email generation and curator matching
+- [ ] **Twitter/X integration** — trending music hashtags as supplementary signal
 
-| File | Contents |
-|---|---|
-| `scoute/data/scout_results.json` | Trending tracks with source, score, subreddit, URL |
-| `scoute/data/arbitrage_results.json` | Artists ranked by arbitrage score with Deezer + Reddit data |
-| `scoute/outputs/emails/*.md` | Generated pitch emails, one file per artist × curator pair |
+---
+
+## Current Status
+
+**Working prototype.** The Scout and Arbitrage agents run reliably and the live dashboard shows real data. The curator matching UI (Match Curators button) works with the 12 Indian Spotify playlists in the database.
+
+Email generation is implemented in `ghostwriter.py` but disabled in production — it requires an active Anthropic API key with credits. The waitlist on the Emails page is live and collecting signups.
+
+The platform is deployed and running at [scoute-production.up.railway.app](https://scoute-production.up.railway.app).

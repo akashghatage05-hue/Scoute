@@ -15,6 +15,11 @@ def sanitize(text):
     # Remove surrogate characters that break UTF-8
     return text.encode('utf-8', errors='ignore').decode('utf-8')
 
+
+def render_safe(*args, **kwargs):
+    """render_template_string + final surrogate-strip before Werkzeug encodes the response."""
+    return sanitize(render_template_string(*args, **kwargs))
+
 ARB_PATH   = Path("scoute/data/arbitrage_results.json")
 SCOUT_PATH = Path("scoute/data/scout_results.json")
 EMAILS_DIR = Path("scoute/outputs/emails")
@@ -267,7 +272,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ── Curator data (12 real Spotify playlists — auto-generated 2026-04-16, Indian music) ────
 const CURATORS=[
   {name:"Travel Songs (Hindi) | Bollywood Roadtrip Hindi | Indie Travels",curator:"Aesthetic Gaane",followers:223089,genres:["hindi indie","bollywood","indian indie"]},
-  {name:"\ud83c\uddee\ud83c\uddf3Indian remix\ud83c\uddee\ud83c\uddf3",curator:"Bertram O'Reilly Poulsen",followers:177658,genres:["indian rap","bollywood remix","desi beats"]},
+  {name:"🇮🇳Indian remix🇮🇳",curator:"Bertram O'Reilly Poulsen",followers:177658,genres:["indian rap","bollywood remix","desi beats"]},
   {name:"Desi songs which make you wanna chammak challo",curator:"Moxie",followers:79305,genres:["desi beats","bollywood","indian pop"]},
   {name:"Indian meme music",curator:"Aksel",followers:54514,genres:["indian rap","desi hip hop","indian pop"]},
   {name:"Hindi Pop Songs",curator:"mahimarajvirsingh",followers:44237,genres:["hindi pop","bollywood","hindi indie"]},
@@ -416,7 +421,7 @@ def home():
     except Exception as exc:
         app.logger.error(f"home() crashed: {exc}", exc_info=True)
         body = '<div class="empty" style="padding:6rem 2rem"><span class="empty-icon" style="font-size:40px;display:block;margin-bottom:1rem">⚠️</span><div style="color:#e2e8f0;font-size:18px;margin-bottom:0.5rem">Pipeline data unavailable</div><div style="color:#475569;font-size:14px">The data service is temporarily unreachable. Try refreshing in a moment.</div></div>'
-        return render_template_string(HTML, page_title="Home", active="home", body=body)
+        return render_safe(HTML, page_title="Home", active="home", body=body)
 
 def _home_inner():
     arb = load_data(ARB_PATH, "arbitrage_results")
@@ -534,7 +539,7 @@ def _home_inner():
 {table}
 </div>
 {modal}"""
-    return render_template_string(HTML, page_title="Home", active="home", body=body)
+    return render_safe(HTML, page_title="Home", active="home", body=body)
 
 @app.route("/scout")
 def scout():
@@ -543,7 +548,7 @@ def scout():
     except Exception as exc:
         app.logger.error(f"scout() crashed: {exc}", exc_info=True)
         body = '<div class="empty" style="padding:6rem 2rem"><span class="empty-icon" style="font-size:40px;display:block;margin-bottom:1rem">⚠️</span><div style="color:#e2e8f0;font-size:18px;margin-bottom:0.5rem">Scout data unavailable</div><div style="color:#475569;font-size:14px">The data service is temporarily unreachable. Try refreshing in a moment.</div></div>'
-        return render_template_string(HTML, page_title="Scout", active="scout", body=body)
+        return render_safe(HTML, page_title="Scout", active="scout", body=body)
 
 def _scout_inner():
     data = load_data(SCOUT_PATH, "scout_results")
@@ -561,7 +566,7 @@ def _scout_inner():
     if not rows: rows = '<div class="empty"><span class="empty-icon">🔍</span>No tracks yet. Run the pipeline.</div>'
     body = f"""<div class="page-head"><div><h1>Scout Results</h1><p>{len(data)} trending tracks found across Reddit</p></div><a href="/" class="btn-back">← Home</a></div>
 <div class="section"><div class="track-list">{rows}</div></div>"""
-    return render_template_string(HTML, page_title="Scout", active="scout", body=body)
+    return render_safe(HTML, page_title="Scout", active="scout", body=body)
 
 @app.route("/emails")
 def emails():
@@ -580,7 +585,7 @@ def emails():
 {success_msg}
 </div>
 </div>"""
-    return render_template_string(HTML, page_title="Emails — Coming Soon", active="emails", body=body)
+    return render_safe(HTML, page_title="Emails — Coming Soon", active="emails", body=body)
 
 def _save_signup(name: str, email: str, source: str = "emails_page", artist: str = "") -> bool:
     """Append a waitlist signup to JSONbin."""
